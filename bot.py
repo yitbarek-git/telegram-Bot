@@ -20,7 +20,7 @@ from telegram.ext import (
     filters,
 )
 
-# ================= ENV =================
+#ENV
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -37,9 +37,10 @@ except Exception:
     raise ValueError("ADMIN_ID or GROUP_ID must be integers")
 
 TELEBIRR_NUMBER = "0929781996"
+CBE_NUMBER = "1000316427735"
 COURSE_PRICE = "400 ETB"
 
-# ================= CONFIG =================
+#  CONFIG 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -50,10 +51,11 @@ DB_FILE = "users.json"
 
 COURSES = {
     "freshman": {
-        "title": "Freshman Courses",
+        "title": "Freshman Courses (English, Mathemathics, \n logic, psychology, \n Economics, Enterprunership, \n physics, Anthropology, History, \n computer programming, physical fitness...)",
         "price": COURSE_PRICE,
         "number": TELEBIRR_NUMBER,
-        "description": "PDFs + Videos + Past Exams",
+        "CBE_ንግድ ባንክ"  : CBE_NUMBER,  
+        "description": "PDFs + Videos Lessons + Past years' Mid and final Exams, Department info and More",
     }
 }
 
@@ -65,12 +67,11 @@ CHOICE, NAME, PAYMENT = range(3)
 # In-memory DB
 users_db = {}
 
-
-# ================= STORAGE HELPERS =================
+# STORAGE HELPERS
 def load_users():
     global users_db
     try:
-        with open(DB_FILE, "r", encoding="utf-8") as f:
+        with open(DB_FILE, "r", encoding="UTF-8") as f:
             users_db = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         users_db = {}
@@ -81,11 +82,10 @@ def load_users():
 
 def save_users():
     try:
-        with open(DB_FILE, "w", encoding="utf-8") as f:
+        with open(DB_FILE, "w", encoding="UTF-8") as f:
             json.dump(users_db, f, indent=2, ensure_ascii=False)
     except Exception as e:
         logger.error(f"Failed to save users: {e}")
-
 
 def get_user_record(user_id: int):
     return users_db.get(str(user_id))
@@ -95,22 +95,19 @@ def set_user_record(user_id: int, data: dict):
     users_db[str(user_id)] = data
     save_users()
 
-
 def now_str():
     return datetime.now().strftime("%Y-%m-%d %H:%M")
 
-
-# ================= UI HELPERS =================
+#  UI HELPERS 
 def main_menu_keyboard():
     return InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("🎓 Join Freshman Course", callback_data="join_freshman")],
             [InlineKeyboardButton("ℹ️ How it works", callback_data="how_it_works")],
-            [InlineKeyboardButton("🆘 Help", callback_data="support")],
+            [InlineKeyboardButton("🆘 Help/እገዛ", callback_data="support")],
             [InlineKeyboardButton("✖ Cancel", callback_data="cancel_flow")],
         ]
     )
-
 
 def approval_keyboard(user_id: int):
     return InlineKeyboardMarkup(
@@ -122,7 +119,6 @@ def approval_keyboard(user_id: int):
         ]
     )
 
-
 def course_info():
     c = COURSES[DEFAULT_COURSE]
     return (
@@ -133,7 +129,7 @@ def course_info():
     )
 
 
-# ================= HANDLERS =================
+#  HANDLERS
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
 
@@ -142,7 +138,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         reply_markup=main_menu_keyboard(),
     )
     return CHOICE
-
 
 async def menu_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
@@ -319,7 +314,13 @@ async def receive_payment_photo(update: Update, context: ContextTypes.DEFAULT_TY
 
     return ConversationHandler.END
 
+async def get_group_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
 
+    await update.message.reply_text(
+        f"Chat ID: {chat.id}\n"
+        f"Chat type: {chat.type}"
+    )
 async def receive_payment_document(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     document = message.document
@@ -600,8 +601,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         pass
 
-
-# ================= MAIN =================
+# MAIN 
 def main():
     load_users()
 
@@ -637,6 +637,7 @@ def main():
     app.add_handler(CommandHandler("myinfo", myinfo))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("stats", admin_stats))
+    app.add_handler(CommandHandler("id", get_group_id))
     app.add_handler(CallbackQueryHandler(admin_decision, pattern="^(approve_|reject_)"))
     app.add_error_handler(error_handler)
 

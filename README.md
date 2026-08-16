@@ -84,7 +84,5 @@ Database integration (PostgreSQL)
 Payment API automation
 Admin dashboard
 Multi-course support
-
-
 👤 Author
 Yitbarek
