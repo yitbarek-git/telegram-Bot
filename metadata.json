@@ -1,0 +1,6 @@
+{
+  "name": "A+ Academy Telegram Bot",
+  "description": "Production-ready Telegram bot for A+ Academy course registration, Telebirr/CBE payment verification, MySQL storage, and Vercel serverless webhook.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
