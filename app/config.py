@@ -1,8 +1,10 @@
 import os
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 ADMIN_ID_RAW = os.getenv("ADMIN_ID", "0").strip()
@@ -18,16 +20,23 @@ try:
 except ValueError:
     GROUP_ID = 0
 
-# Database Configuration (MySQL)
-DB_HOST = os.getenv("DB_HOST", "localhost").strip()
-DB_PORT = int(os.getenv("DB_PORT", "3306").strip() or 3306)
-DB_USER = os.getenv("DB_USER", "root").strip()
-DB_PASSWORD = os.getenv("DB_PASSWORD", "").strip()
-DB_NAME = os.getenv("DB_NAME", "aplus_academy").strip()
+# MySQL Database Configuration (Supports Aiven MySQL, AWS RDS, local, etc.)
+# Supports both MYSQL_* and DB_* environment variable conventions
+MYSQL_HOST = os.getenv("MYSQL_HOST") or os.getenv("DB_HOST", "localhost").strip()
+_port_raw = os.getenv("MYSQL_PORT") or os.getenv("DB_PORT", "3306")
+try:
+    MYSQL_PORT = int(_port_raw) if _port_raw else 3306
+except ValueError:
+    MYSQL_PORT = 3306
 
-# Webhook Configuration (Vercel)
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "").strip()
-WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "").strip()
+MYSQL_USER = os.getenv("MYSQL_USER") or os.getenv("DB_USER", "avnadmin").strip()
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD") or os.getenv("DB_PASSWORD", "").strip()
+MYSQL_DATABASE = os.getenv("MYSQL_DATABASE") or os.getenv("DB_NAME", "defaultdb").strip()
+
+# SSL Mode Configuration (Aiven MySQL requires SSL; default is 'REQUIRED')
+# Options: 'REQUIRED', 'DISABLED', or path to CA cert pem file
+MYSQL_SSL_MODE = os.getenv("MYSQL_SSL_MODE", "REQUIRED").strip()
+MYSQL_SSL_CA = os.getenv("MYSQL_SSL_CA", "").strip()
 
 # Bot Constants
 DEFAULT_COURSE = "freshman"

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Migration script to migrate legacy users.json data into MySQL database.
+Migration script to migrate legacy users.json data into MySQL / Aiven database.
 """
 
 import os
 import json
 import logging
-from app.config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 from app.database.connection import get_db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -17,17 +16,17 @@ JSON_FILE = "users.json"
 
 def migrate():
     if not os.path.exists(JSON_FILE):
-        logger.warning(f"File '{JSON_FILE}' not found. Nothing to migrate.")
+        logger.warning("File '%s' not found. Nothing to migrate.", JSON_FILE)
         return
 
     try:
         with open(JSON_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
     except Exception as e:
-        logger.error(f"Failed to read '{JSON_FILE}': {e}")
+        logger.error("Failed to read '%s': %s", JSON_FILE, e)
         return
 
-    logger.info(f"Loaded {len(data)} user records from '{JSON_FILE}'. Starting MySQL migration...")
+    logger.info("Loaded %d user records from '%s'. Starting MySQL migration...", len(data), JSON_FILE)
 
     migrated_users = 0
     migrated_payments = 0
@@ -39,7 +38,7 @@ def migrate():
                 try:
                     telegram_id = int(tg_id_str)
                 except ValueError:
-                    logger.warning(f"Skipping invalid Telegram ID key: {tg_id_str}")
+                    logger.warning("Skipping invalid Telegram ID key: %s", tg_id_str)
                     continue
 
                 full_name = u.get("name") or "Student"
@@ -108,9 +107,9 @@ def migrate():
 
     logger.info("==========================================")
     logger.info(" Migration Completed Successfully! 🎉")
-    logger.info(f" Users Migrated:       {migrated_users}")
-    logger.info(f" Payments Migrated:    {migrated_payments}")
-    logger.info(f" Enrollments Created:  {migrated_enrollments}")
+    logger.info(" Users Migrated:       %d", migrated_users)
+    logger.info(" Payments Migrated:    %d", migrated_payments)
+    logger.info(" Enrollments Created:  %d", migrated_enrollments)
     logger.info("==========================================")
 
 

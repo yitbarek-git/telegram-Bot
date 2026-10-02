@@ -16,22 +16,21 @@ ENV/
 env.bak/
 venv.bak/
 
-# Telegram & Local data
+# SQLite / Local data backups
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
 users.json
 *.session
 *.session-journal
 
-# Vercel
+# Vercel / Legacy serverless
 .vercel
 
-# Node / Vite (if present)
-node_modules/
-dist/
-dist-ssr/
-*.local
-
-# IDE
+# IDE / OS
 .vscode/
 .idea/
 *.swp
 *.swo
+.DS_Store

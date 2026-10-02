@@ -1,8 +1,22 @@
 import logging
+import os
 from typing import Optional, Dict, Any, List, Tuple
 from app.database.connection import get_db
 
 logger = logging.getLogger(__name__)
+
+
+def test_connection() -> bool:
+    """Tests the MySQL connection and returns True if healthy."""
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT 1 AS alive")
+                res = cursor.fetchone()
+                return bool(res and res.get("alive") == 1)
+    except Exception as e:
+        logger.error("MySQL health check failed: %s", e)
+        return False
 
 
 def get_user_by_telegram_id(telegram_id: int) -> Optional[Dict[str, Any]]:

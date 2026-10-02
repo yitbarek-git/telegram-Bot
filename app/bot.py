@@ -113,7 +113,7 @@ def main():
     logger.info("Initializing A+ Academy Telegram Bot in Polling Mode...")
     app = create_bot_app()
     logger.info("Bot is running. Press Ctrl+C to stop.")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=False)
 
 
 if __name__ == "__main__":

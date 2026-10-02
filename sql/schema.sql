@@ -1,4 +1,10 @@
+-- ==============================================================
+-- A+ Academy Telegram Bot Database Schema (MySQL / Aiven)
+-- Tables: users, courses, payments, enrollments
+-- ==============================================================
 
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- 1. Users Table
 CREATE TABLE IF NOT EXISTS users (
@@ -57,6 +63,8 @@ CREATE TABLE IF NOT EXISTS enrollments (
     CONSTRAINT fk_enrollments_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE RESTRICT,
     CONSTRAINT fk_enrollments_payment FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- Initial Course Data: Freshman Course
 INSERT INTO courses (id, title, price, telebirr_number, cbe_number, description)
