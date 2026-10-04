@@ -4,7 +4,7 @@ import json
 import os
 import sys
 
-PORT = 3000
+PORT = int(os.getenv("PORT", "3000"))
 HOST = "0.0.0.0"
 
 class BotStatusHandler(http.server.SimpleHTTPRequestHandler):
@@ -13,10 +13,10 @@ class BotStatusHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(b'{"status":"healthy","bot":"A+ Academy Telegram Bot"}')
+            self.wfile.write(b'{"status":"healthy","bot":"A+ Academy Telegram Bot","storage":"JSON"}')
             return
 
-        if self.path == "/" or self.path == "/index.html":
+        if self.path in ("/", "/index.html"):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
@@ -25,7 +25,7 @@ class BotStatusHandler(http.server.SimpleHTTPRequestHandler):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A+ Academy Telegram Bot - Server Running</title>
+    <title>A+ Academy Telegram Bot - Render Web Service</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -128,35 +128,35 @@ class BotStatusHandler(http.server.SimpleHTTPRequestHandler):
 <body>
     <div class="card">
         <div class="badge">
-            <span class="dot"></span> Server Active (Port 3000)
+            <span class="dot"></span> Render Free Web Service Running
         </div>
         <h1>A+ Academy Telegram Bot</h1>
-        <p>Your Python Telegram bot backend and SQLite database service is running and ready for webhook or polling deployment.</p>
+        <p>A+ Academy course registration bot with lightweight JSON storage and built-in HTTP health check endpoint for Render.</p>
         
         <div class="info-grid">
             <div class="info-item">
-                <div class="info-label">Database</div>
-                <div class="info-val">SQLite (aplus_academy.db)</div>
+                <div class="info-label">Storage</div>
+                <div class="info-val">JSON (data/users.json)</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Supported Languages</div>
-                <div class="info-val">English (en) / Amharic (am)</div>
+                <div class="info-label">Offer</div>
+                <div class="info-val">400 ETB (Freshman)</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Local Runner</div>
-                <div class="info-val">python3 -m app.bot</div>
+                <div class="info-label">Languages</div>
+                <div class="info-val">English & Amharic</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Serverless Endpoint</div>
-                <div class="info-val">api/webhook.py</div>
+                <div class="info-label">Health Check</div>
+                <div class="info-val">GET /health (HTTP 200)</div>
             </div>
         </div>
 
-        <div class="info-label" style="margin-bottom: 8px;">Run Local Polling:</div>
-        <div class="code-box">python3 -m app.bot</div>
+        <div class="info-label" style="margin-bottom: 8px;">Start Command:</div>
+        <div class="code-box">python run.py</div>
 
         <div class="footer">
-            A+ Academy Bot • SQLite • Python Telegram Bot
+            A+ Academy • Telegram Bot • JSON Storage
         </div>
     </div>
 </body>

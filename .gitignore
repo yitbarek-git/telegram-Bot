@@ -1,4 +1,4 @@
-# Environments
+# Environments & Secrets
 .env
 .env.local
 .env.*.local
@@ -16,19 +16,17 @@ ENV/
 env.bak/
 venv.bak/
 
-# SQLite / Local data backups
+# Local JSON Data (Keeps user data out of git repositories)
+data/*.json
+data/
+!data/.gitkeep
+
+# SQLite / Database dumps
 *.db
-*.db-journal
 *.sqlite
 *.sqlite3
-users.json
-*.session
-*.session-journal
 
-# Vercel / Legacy serverless
-.vercel
-
-# IDE / OS
+# OS / Editor
 .vscode/
 .idea/
 *.swp

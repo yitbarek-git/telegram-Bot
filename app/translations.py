@@ -1,210 +1,245 @@
 """
 Translations module for A+ Academy Telegram Bot.
-Supports English ('en') and Amharic ('am').
+Plain-text safe strings for Ethiopian university freshman education bot.
 """
 
 TRANSLATIONS = {
     "en": {
-        "welcome": "👋 Welcome to *A+ Academy*!\n\nChoose an option below to get started:",
-        "btn_join_freshman": "🎓 Join Freshman Course",
-        "btn_how_it_works": "ℹ️ How it works",
-        "btn_support": "🆘 Help/እገዛ",
-        "btn_language": "🌐 Change Language / ቋንቋ",
-        "btn_cancel": "✖ Cancel",
-        "select_language": "🌐 Select your preferred language / ቋንቋዎን ይምረጡ:",
-        "language_set": "✅ Language changed to *English*.",
-        "enter_name": "📝 Send your *full name* exactly as you want it recorded.\nExample: *Amanuel Tadesse*",
-        "name_too_short": "❌ Please enter a valid full name (at least 5 characters).\nExample: *Amanuel Tadesse*",
-        "payment_instruction": (
-            "💳 *Payment Instructions*\n\n"
-            "{course_info}\n\n"
-            "➡️ After payment, send the *screenshot* as a photo or image file.\n"
-            "📸 Ready? Send your screenshot now."
+        "welcome": (
+            "👋 Welcome to A+ Academy!\n\n"
+            "The premier academic platform for Ethiopian university freshman students.\n\n"
+            "Get complete freshman course tutorials, lecture PDFs, chapter video lessons, "
+            "past mid & final exams with detailed solutions, and department preparation.\n\n"
+            "Course Package Price: 400 ETB (Complete Freshman Year Access)\n\n"
+            "Please choose an option below to continue:"
         ),
-        "course_info": (
-            "📚 *Course:* {title}\n"
-            "💰 *Price:* {price}\n"
-            "📱 *Telebirr:* `{telebirr}`\n"
-            "🏦 *CBE (ንግድ ባንክ):* `{cbe}`\n"
-            "📦 *Includes:* {description}"
+        "courses_overview": (
+            "🎓 A+ Academy Freshman Education Package\n\n"
+            "📚 Included Subjects:\n"
+            "• Mathematics (Applied & Social)\n"
+            "• Communicative English\n"
+            "• General Physics\n"
+            "• Critical Thinking & Logic\n"
+            "• General Psychology\n"
+            "• Economics\n"
+            "• Introduction to Emerging Technologies\n"
+            "• History of Ethiopia & the Horn\n"
+            "• Anthropology\n"
+            "• Physical Fitness\n"
+            "• Computer Programming & Geography\n\n"
+            "📦 What you receive:\n"
+            "• Chapter-by-chapter video lectures\n"
+            "• Short summary notes & PPT slides\n"
+            "• Midterm exam collection with answers\n"
+            "• Final exam worksheets and model questions\n"
+            "• University department selection guidance\n\n"
+            "💰 Full Package Price: 400 ETB (One-time payment)\n\n"
+            "Click 'Payment / Enrollment' below to enroll."
         ),
-        "how_it_works": (
-            "📖 *How it works*\n\n"
-            "1️⃣ Send your full name\n"
-            "2️⃣ Pay using Telebirr or CBE\n"
-            "3️⃣ Send the payment screenshot\n"
-            "4️⃣ Admin checks & verifies it\n"
-            "5️⃣ You receive a private one-time group invite link\n\n"
-            "{course_info}"
+        "payment_menu_text": (
+            "💳 A+ Academy Enrollment (400 ETB)\n\n"
+            "Pay exactly 400 ETB using Telebirr or local bank transfer (CBE), "
+            "then send the payment receipt/screenshot here.\n\n"
+            "Select your preferred payment method below:"
         ),
-        "support": (
-            "🆘 *Support*\n\n"
-            "• First send your full name\n"
-            "• Pay using the displayed Telebirr or CBE number\n"
-            "• Send the payment screenshot as a photo or image file\n"
-            "• If you send text or a sticker by mistake, just send the screenshot again\n"
-            "• For additional issues, contact the admin."
+        "telebirr_instructions": (
+            "📱 Telebirr Payment Instructions\n\n"
+            "1. Open Telebirr app or dial *127#\n"
+            "2. Send 400 ETB to:\n"
+            "   • Phone Number: {phone}\n"
+            "   • Account Name: {name}\n"
+            "   • Amount: 400 ETB\n\n"
+            "3. Take a screenshot of the completed payment confirmation.\n"
+            "4. Send the screenshot here as a photo or image file."
         ),
-        "cancel_success": "❌ Cancelled. Type /start when you are ready again.",
-        "received_first": (
-            "📸 *Screenshot received!*\n"
-            "🧾 Payment ID: `#{payment_id}`\n\n"
-            "The admin will verify your payment soon.\n"
-            "Use /status to check your current state."
+        "cbe_instructions": (
+            "🏦 CBE (Commercial Bank of Ethiopia) Instructions\n\n"
+            "1. Open CBE Birr, CBE Mobile Banking, or visit a branch\n"
+            "2. Transfer 400 ETB to:\n"
+            "   • Account Number: {account}\n"
+            "   • Account Name: {name}\n"
+            "   • Amount: 400 ETB\n\n"
+            "3. Take a screenshot or clear photo of the payment slip/SMS confirmation.\n"
+            "4. Send the screenshot here as a photo or image file."
         ),
-        "received_updated": (
-            "🔄 *Updated screenshot received!*\n"
-            "🧾 Payment ID: `#{payment_id}` (Submission #{submission_count})\n"
-            "The admin has been notified with your latest receipt."
+        "ask_receipt": (
+            "📸 Submit Payment Screenshot\n\n"
+            "Please send the exact payment receipt/screenshot as a photo or image file now.\n\n"
+            "If you sent via Telebirr or CBE, send the screenshot showing the transaction details.\n"
+            "Type /cancel to cancel."
         ),
-        "received_re_enrollment": (
-            "🔄 *New payment screenshot received!*\n"
-            "🧾 Payment ID: `#{payment_id}`\n"
-            "It has been sent for admin verification."
+        "receipt_received_pending": (
+            "✅ Your payment receipt has been submitted. Please wait for admin approval.\n\n"
+            "Receipt ID: #{payment_id}\n"
+            "Status: Pending Verification\n\n"
+            "Our admin team will review your receipt and activate your access shortly.\n"
+            "Use the 'My Enrollment' button or /status to check anytime."
+        ),
+        "receipt_updated_pending": (
+            "🔄 Updated receipt received! (Submission #{submission_count})\n\n"
+            "Receipt ID: #{payment_id}\n"
+            "Status: Pending Verification\n\n"
+            "Our admin has been notified with your latest receipt."
+        ),
+        "approval_student_message": (
+            "🎉 Congratulations! Your payment has been verified!\n\n"
+            "Welcome to A+ Academy Freshman Batch!\n\n"
+            "🔗 Your Private Telegram Group Link:\n{invite_link}\n\n"
+            "Please click the link above to join your classmates and access all video lessons, "
+            "lecture notes, and exam materials."
+        ),
+        "rejection_student_message": (
+            "❌ Payment Not Approved\n\n"
+            "Your submitted receipt could not be verified by the admin.\n\n"
+            "Please verify your payment details and make sure the screenshot shows "
+            "the 400 ETB transfer clearly.\n\n"
+            "You can submit a corrected screenshot now or contact support."
+        ),
+        "unrelated_message": (
+            "👋 I can help you enroll in A+ Academy courses.\n\n"
+            "Please choose an option from the menu below:"
         ),
         "not_an_image": (
-            "❌ That file is not an image.\n\n"
-            "Please send the payment screenshot as a *photo* or an *image file* (PNG, JPG)."
+            "⚠️ Please send the payment receipt as a clear photo or image file (PNG/JPG).\n\n"
+            "If you need help or wish to go back, tap Main Menu."
         ),
-        "sticker_received": (
-            "😕 I received a sticker.\n\n"
-            "Please send your *payment screenshot* as a photo or image file."
-        ),
-        "text_received": (
-            "📝 I received text, not a screenshot.\n\n"
-            "Please send your *payment screenshot* as a photo or image file."
-        ),
-        "approval_message": (
-            "✅ *Payment verified!*\n\n"
-            "🎉 Welcome to *A+ Academy*!\n\n"
-            "🔗 *Your private group link:*\n{invite_link}\n\n"
-            "⚠️ *Note:* This link can only be used once."
-        ),
-        "rejection_message": (
-            "❌ *Payment not approved*\n\n"
-            "Your screenshot could not be verified by the admin.\n"
-            "Please check your transaction details and try again with /start."
-        ),
-        "status_title": "📊 *Your Status*",
-        "status_no_record": "📭 No record found yet.\nUse /start to begin enrollment.",
-        "myinfo_title": "📋 *Your Information & History*",
+        "cancel_success": "Cancelled. Type /start anytime to return to the main menu.",
+        "select_language": "🌐 Select your preferred language / ቋንቋዎን ይምረጡ:",
+        "language_set": "✅ Language changed to English.",
         "help_text": (
-            "🆘 *Help Guide*\n\n"
-            "1️⃣ Type /start\n"
-            "2️⃣ Send your full name\n"
-            "3️⃣ Pay the displayed amount via Telebirr or CBE\n"
-            "4️⃣ Send the screenshot (photo or image file)\n\n"
+            "ℹ️ How to enroll in A+ Academy:\n\n"
+            "1. Tap 'Freshman Courses' to see what's included.\n"
+            "2. Tap 'Payment / Enrollment' to get our Telebirr or CBE bank details.\n"
+            "3. Transfer 400 ETB.\n"
+            "4. Take a screenshot of the transfer confirmation.\n"
+            "5. Send the screenshot directly in this chat.\n"
+            "6. Admin will verify your receipt and send your private group invite link!\n\n"
             "Commands:\n"
-            "• /status - Check your payment & enrollment status\n"
-            "• /myinfo - View your registered info & payment history\n"
-            "• /cancel - Cancel the current action\n"
-            "• /help - Show this help message"
+            "• /start - Open main menu\n"
+            "• /status - Check payment & enrollment status\n"
+            "• /help - Show this guide\n"
+            "• /cancel - Cancel current action"
         ),
-        "unknown_error": "⚠️ An unexpected error occurred. Please try again later or contact the admin."
     },
     "am": {
-        "welcome": "👋 እንኳን ወደ *አፕላስ አካዳሚ (A+ Academy)* በደህና መጡ!\n\nለመጀመር ከታች ካሉት አማራጮች አንዱን ይምረጡ፦",
-        "btn_join_freshman": "🎓 የፍሬሽማን ኮርስ ተቀላቀል",
-        "btn_how_it_works": "ℹ️ አሰራሩ እንዴት ነው?",
-        "btn_support": "🆘 እገዛ/Help",
-        "btn_language": "🌐 ቋንቋ ቀይር / Language",
-        "btn_cancel": "✖ ሰርዝ",
-        "select_language": "🌐 የመረጡትን ቋንቋ ይምረጡ / Select your preferred language:",
-        "language_set": "✅ ቋንቋው ወደ *አማርኛ* ተቀይሯል።",
-        "enter_name": "📝 እባክዎ *ሙሉ ስምዎን* በትክክል ይላኩ።\nምሳሌ፦ *አማኑኤል ታደሰ*",
-        "name_too_short": "❌ እባክዎ ትክክለኛ ሙሉ ስም ያስገቡ (ቢያንስ 5 ፊደላት)።\nምሳሌ፦ *አማኑኤል ታደሰ*",
-        "payment_instruction": (
-            "💳 *የክፍያ መመሪያ*\n\n"
-            "{course_info}\n\n"
-            "➡️ ከከፈሉ በኋላ የከፈሉበትን *ደረሰኝ (Screenshot)* በፎቶ ወይም በምስል ፋይል ይላኩ።\n"
-            "📸 ዝግጁ ነዎት? አሁኑኑ ደረሰኙን ይላኩ።"
+        "welcome": (
+            "👋 እንኳን ወደ አፕላስ አካዳሚ (A+ Academy) በደህና መጡ!\n\n"
+            "ለኢትዮጵያ ዩኒቨርሲቲ የፍሬሽማን ተማሪዎች የተዘጋጀ ቁጥር 1 የትምህርት መድረክ።\n\n"
+            "የሁሉንም የፍሬሽማን ኮርሶች አጋዥ የቪዲዮ ትምህርቶች፣ ማጠቃለያ ማስታወሻዎች (PDFs)፣ "
+            "የሚድተርም እና የፋይናል ፈተናዎች ከነሙሉ ማብራሪያቸው እና የዲፓርትመንት መረጃዎችን ያገኛሉ።\n\n"
+            "የኮርሱ ዋጋ፦ 400 ብር (ለሙሉ የፍሬሽማን አመት)\n\n"
+            "ለመቀጠል ከታች ካሉት አማራጮች አንዱን ይምረጡ፦"
         ),
-        "course_info": (
-            "📚 *ኮርስ:* {title}\n"
-            "💰 *ዋጋ:* {price}\n"
-            "📱 *ቴሌብር:* `{telebirr}`\n"
-            "🏦 *ንግድ ባንክ (CBE):* `{cbe}`\n"
-            "📦 *የሚያካትተው:* {description}"
+        "courses_overview": (
+            "🎓 የA+ Academy ፍሬሽማን የትምህርት ፓኬጅ\n\n"
+            "📚 የሚያካትታቸው ኮርሶች፦\n"
+            "• Mathematics (Applied & Social)\n"
+            "• Communicative English\n"
+            "• General Physics\n"
+            "• Critical Thinking & Logic\n"
+            "• General Psychology\n"
+            "• Economics\n"
+            "• Emerging Technologies\n"
+            "• History of Ethiopia & the Horn\n"
+            "• Anthropology\n"
+            "• Physical Fitness\n"
+            "• Computer Programming & Geography\n\n"
+            "📦 የሚያገኙት ነገር፦\n"
+            "• በየምዕራፉ የተዘጋጁ የቪዲዮ ማብራሪያዎች\n"
+            "• አጫጭር የPDF ማጠቃለያ ኖቶች\n"
+            "• ያለፉ አመታት የሚድተርም ፈተናዎች ከመፍትሄያቸው ጋር\n"
+            "• የፋይናል ፈተና ጥያቄዎች እና ሞዴል ፈተናዎች\n"
+            "• የዲፓርትመንት አመራረጥ መመሪያዎች\n\n"
+            "💰 የፓኬጁ ዋጋ፦ 400 ብር ብቻ (የአንድ ጊዜ ክፍያ)\n\n"
+            "ለመመዝገብ ከታች 'ክፍያ / ምዝገባ' የሚለውን ይጫኑ።"
         ),
-        "how_it_works": (
-            "📖 *አሰራሩ እንዴት ነው?*\n\n"
-            "1️⃣ ሙሉ ስምዎን ይላኩ\n"
-            "2️⃣ በቴሌብር ወይም በንግድ ባንክ ይክፈሉ\n"
-            "3️⃣ የከፈሉበትን ደረሰኝ ይላኩ\n"
-            "4️⃣ አስተዳዳሪው አረጋግጦ ይቀበላል\n"
-            "5️⃣ የአንድ ጊዜ የፕራይቬት ግሩፕ ሊንክ ይደርስዎታል\n\n"
-            "{course_info}"
+        "payment_menu_text": (
+            "💳 የA+ Academy ምዝገባ ክፍያ (400 ብር)\n\n"
+            "በትክክል 400 ብር በቴሌብር (Telebirr) ወይም በኢትዮጵያ ንግድ ባንክ (CBE) ይክፈሉ፣ "
+            "ከዚያም የከፈሉበትን ደረሰኝ/Screenshot እዚህ ይላኩ።\n\n"
+            "የክፍያ ዘዴዎን ይምረጡ፦"
         ),
-        "support": (
-            "🆘 *እገዛ*\n\n"
-            "• መጀመሪያ ሙሉ ስምዎን ይላኩ\n"
-            "• በተሰጠው የቴሌብር ወይም የንግድ ባንክ ሂሳብ ቁጥር ይክፈሉ\n"
-            "• የክፍያ ደረሰኙን በፎቶ ወይም በምስል ፋይል ይላኩ\n"
-            "• በስህተት ፅሁፍ ወይም ስቲከር ከላኩ ደረሰኙን በድጋሚ ይላኩ\n"
-            "• ተጨማሪ ችግር ካጋጠመዎት አስተዳዳሪውን ያነጋግሩ።"
+        "telebirr_instructions": (
+            "📱 የቴሌብር (Telebirr) የክፍያ መመሪያ\n\n"
+            "1. የቴሌብር መተግበሪያን ይክፈቱ ወይም *127# ይደውሉ\n"
+            "2. 400 ብር ወደሚከተለው ቁጥር ያስተላልፉ፦\n"
+            "   • ስልክ ቁጥር፦ {phone}\n"
+            "   • የስም ማረጋገጫ፦ {name}\n"
+            "   • መጠን፦ 400 ብር\n\n"
+            "3. ክፍያው ሲጠናቀቅ የደረሰኙን Screenshot ያንሱ።\n"
+            "4. ያነሱትን Screenshot እዚህ በፎቶ ወይም በምስል ፋይል ይላኩ።"
         ),
-        "cancel_success": "❌ ተሰርዟል። ዝግጁ ሲሆኑ በድጋሚ /start ብለው ይጀምሩ።",
-        "received_first": (
-            "📸 *ደረሰኝዎ ደርሶናል!*\n"
-            "🧾 የክፍያ መለያ፦ `#{payment_id}`\n\n"
-            "አስተዳዳሪው በቅርቡ አረጋግጦ ሊንክ ይልክልዎታል።\n"
-            "ሁኔታዎን ለመፈተሽ /status ይጠቀሙ።"
+        "cbe_instructions": (
+            "🏦 የኢትዮጵያ ንግድ ባንክ (CBE) የክፍያ መመሪያ\n\n"
+            "1. በCBE Birr፣ በሞባይል ባንኪንግ ወይም በባንክ ቅርንጫፍ\n"
+            "2. 400 ብር ወደሚከተለው ሂሳብ ያስተላልፉ፦\n"
+            "   • የሂሳብ ቁጥር፦ {account}\n"
+            "   • የስም ማረጋገጫ፦ {name}\n"
+            "   • መጠን፦ 400 ብር\n\n"
+            "3. የከፈሉበትን ደረሰኝ Screenshot ወይም የደረሰኙን ግልጽ ፎቶ ያንሱ።\n"
+            "4. ያነሱትን Screenshot እዚህ በፎቶ ወይም በምስል ፋይል ይላኩ።"
         ),
-        "received_updated": (
-            "🔄 *የተስተካከለ ደረሰኝ ደርሶናል!*\n"
-            "🧾 የክፍያ መለያ፦ `#{payment_id}` (ቅጽ #{submission_count})\n"
-            "የቅርብ ጊዜው ደረሰኝ ለአስተዳዳሪ ተልኳል።"
+        "ask_receipt": (
+            "📸 የክፍያ ደረሰኝ (Screenshot) ይላኩ\n\n"
+            "እባክዎ የከፈሉበትን ትክክለኛ ደረሰኝ በፎቶ ወይም በምስል ፋይል አሁን ይላኩ።\n\n"
+            "በቴሌብር ወይም በንግድ ባንክ ያስተላለፉበትን ዝርዝር የሚያሳይ መሆን አለበት።\n"
+            "ለማቋረጥ /cancel ይላኩ።"
         ),
-        "received_re_enrollment": (
-            "🔄 *አዲስ የክፍያ ደረሰኝ ደርሶናል!*\n"
-            "🧾 የክፍያ መለያ፦ `#{payment_id}`\n"
-            "ለማረጋገጫ ለአስተዳዳሪ ተልኳል።"
+        "receipt_received_pending": (
+            "✅ የክፍያ ደረሰኝዎ ደርሶናል! እባክዎ የአስተዳዳሪውን ማረጋገጫ ይጠብቁ።\n\n"
+            "የደረሰኝ መለያ፦ #{payment_id}\n"
+            "ሁኔታ፦ በማረጋገጥ ላይ (Pending)\n\n"
+            "አስተዳዳሪው ደረሰኙን ፈትሾ እንደጨረሰ የፕራይቬት ግሩፕ ሊንኩን ወዲያውኑ ይልክልዎታል።\n"
+            "ሁኔታዎን ለመፈተሽ 'የእኔ ምዝገባ' የሚለውን ቁልፍ ወይም /status ይጠቀሙ።"
+        ),
+        "receipt_updated_pending": (
+            "🔄 የተስተካከለ ደረሰኝ ደርሶናል! (ቅጽ #{submission_count})\n\n"
+            "የደረሰኝ መለያ፦ #{payment_id}\n"
+            "ሁኔታ፦ በማረጋገጥ ላይ (Pending)\n\n"
+            "የቅርብ ጊዜው ደረሰኝ ለአስተዳዳሪው ተልኳል።"
+        ),
+        "approval_student_message": (
+            "🎉 እንኳን ደስ አለዎት! ክፍያዎ ተረጋግጧል!\n\n"
+            "እንኳን ወደ A+ Academy የፍሬሽማን ባች በደህና መጡ!\n\n"
+            "🔗 የእርስዎ የፕራይቬት ቴሌግራም ግሩፕ ሊንክ፦\n{invite_link}\n\n"
+            "የቪዲዮ ትምህርቶችን፣ ኖቶችን እና የፈተና ጥያቄዎችን ለማግኘት ሊንኩን ተጭነው ይቀላቀሉ።"
+        ),
+        "rejection_student_message": (
+            "❌ ክፍያዎ አልተረጋገጠም\n\n"
+            "የላኩት የክፍያ ደረሰኝ በአስተዳዳሪው ሊረጋገጥ አልቻለም።\n\n"
+            "እባክዎ የከፈሉትን 400 ብር በትክክል የሚያሳይ ደረሰኝ መሆኑን አረጋግጠው "
+            "ትክክለኛውን Screenshot አሁን ይላኩ ወይም አስተዳዳሪውን ያነጋግሩ።"
+        ),
+        "unrelated_message": (
+            "👋 በA+ Academy ኮርሶች ለመመዝገብ ከታች ካሉት አማራጮች አንዱን ይምረጡ፦"
         ),
         "not_an_image": (
-            "❌ የተላከው ፋይል የምስል ፋይል አይደለም።\n\n"
-            "እባክዎ የክፍያ ደረሰኙን እንደ *ፎቶ* ወይም እንደ ምስል ፋይል (PNG, JPG) ይላኩ።"
+            "⚠️ እባክዎ የክፍያ ደረሰኙን እንደ ግልጽ ፎቶ ወይም የምስል ፋይል (PNG/JPG) ይላኩ።\n\n"
+            "እገዛ ከፈለጉ ወይም ወደ ኋላ ለመመለስ 'ዋና ማውጫ' የሚለውን ይጫኑ።"
         ),
-        "sticker_received": (
-            "😕 ስቲከር ደርሶናል።\n\n"
-            "እባክዎ የከፈሉበትን *ደረሰኝ* በፎቶ ወይም በምስል ፋይል ይላኩ።"
-        ),
-        "text_received": (
-            "📝 የደረሰን ፅሁፍ ነው እንጂ ደረሰኝ አይደለም።\n\n"
-            "እባክዎ የከፈሉበትን *ደረሰኝ* በፎቶ ወይም በምስል ፋይል ይላኩ።"
-        ),
-        "approval_message": (
-            "✅ *ክፍያዎ ተረጋግጧል!*\n\n"
-            "🎉 እንኳን ወደ *አፕላስ አካዳሚ* በደህና መጡ!\n\n"
-            "🔗 *የፕራይቬት ግሩፕ ሊንክዎ:*\n{invite_link}\n\n"
-            "⚠️ *ማሳሰቢያ:* ይህ ሊንክ ለአንድ ጊዜ ብቻ የሚያገለግል ነው።"
-        ),
-        "rejection_message": (
-            "❌ *ክፍያዎ አልተረጋገጠም*\n\n"
-            "የላኩት የክፍያ ደረሰኝ በአስተዳዳሪው ሊረጋገጥ አልቻለም።\n"
-            "እባክዎ የግብይት ቁጥሩን በትክክል አረጋግጠው በ /start በድጋሚ ይሞክሩ።"
-        ),
-        "status_title": "📊 *የእርስዎ ሁኔታ*",
-        "status_no_record": "📭 እስካሁን ምንም የተመዘገበ መረጃ አልተገኘም።\nለመመዝገብ /start ይላኩ።",
-        "myinfo_title": "📋 *የእርስዎ መረጃ እና የክፍያ ታሪክ*",
+        "cancel_success": "ተሰርዟል። ወደ ዋና ማውጫ ለመመለስ በማንኛውም ጊዜ /start ይላኩ።",
+        "select_language": "🌐 የመረጡትን ቋንቋ ይምረጡ / Select your preferred language:",
+        "language_set": "✅ ቋንቋው ወደ አማርኛ ተቀይሯል።",
         "help_text": (
-            "🆘 *የእገዛ መመሪያ*\n\n"
-            "1️⃣ /start ብለው ይላኩ\n"
-            "2️⃣ ሙሉ ስምዎን ያስገቡ\n"
-            "3️⃣ የተጠቀሰውን ክፍያ በቴሌብር ወይም በንግድ ባንክ ያስተላልፉ\n"
-            "4️⃣ ደረሰኙን በፎቶ ወይም በምስል ፋይል ይላኩ\n\n"
+            "ℹ️ በA+ Academy እንዴት መመዝገብ ይቻላል?፦\n\n"
+            "1. 'የፍሬሽማን ኮርሶች' የሚለውን ተጭነው የኮርሱን ዝርዝር ይመልከቱ።\n"
+            "2. 'ክፍያ / ምዝገባ' የሚለውን ተጭነው የቴሌብር ወይም የንግድ ባንክ ሂሳብ ቁጥር ያግኙ።\n"
+            "3. 400 ብር ያስተላልፉ።\n"
+            "4. የከፈሉበትን ደረሰኝ Screenshot ያንሱ።\n"
+            "5. ያነሱትን Screenshot እዚህ ይላኩ።\n"
+            "6. አስተዳዳሪው ደረሰኙን አይቶ ሲያረጋግጥ የፕራይቬት ግሩፕ ሊንክ ይደርስዎታል!\n\n"
             "የትዕዛዞች ዝርዝር፦\n"
-            "• /status - የክፍያ/ምዝገባ ሁኔታን ለመፈተሽ\n"
-            "• /myinfo - የገቡትን መረጃ እና የክፍያ ታሪክ ለማየት\n"
-            "• /cancel - ሂደቱን ለማቋረጥ\n"
-            "• /help - ይህን መመሪያ ለማየት"
+            "• /start - ዋናውን ማውጫ ለመክፈት\n"
+            "• /status - የክፍያ እና የምዝገባ ሁኔታን ለማየት\n"
+            "• /help - ይህን መመሪያ ለማየት\n"
+            "• /cancel - ሂደቱን ለማቋረጥ"
         ),
-        "unknown_error": "⚠️ ያልተጠበቀ ስህተት አጋጥሟል። እባክዎ ትንሽ ቆይተው እንደገና ይሞክሩ ወይም አስተዳዳሪውን ያነጋግሩ።"
-    }
+    },
 }
 
 
 def t(key: str, lang: str = "en", **kwargs) -> str:
-    """Get localized text with fallback to English."""
+    """Retrieve text safely without throwing KeyError or format crashes."""
     selected_lang = lang if lang in TRANSLATIONS else "en"
     text = TRANSLATIONS[selected_lang].get(key) or TRANSLATIONS["en"].get(key, key)
     if kwargs:

@@ -2,49 +2,56 @@ import asyncio
 import logging
 import signal
 import sys
-from telegram.error import Conflict, NetworkError, TelegramError
-from app.config import BOT_TOKEN, ADMIN_ID
-from app.bot import create_bot_app
-from app.database.queries import test_connection
+from app.config import BOT_TOKEN, ADMIN_IDS, PORT
+from app.web import start_web_server
 
 logging.basicConfig(
     format="%(asctime)s - [%(levelname)s] - %(name)s - %(message)s",
     level=logging.INFO,
 )
-logger = logging.getLogger("run_bot")
+logger = logging.getLogger("aplus_bot")
 
 
 async def main():
-    logger.info("==================================================")
-    logger.info(" Starting A+ Academy Telegram Bot (Render Worker) ")
-    logger.info("==================================================")
+    logger.info("==========================================================")
+    logger.info(" Starting A+ Academy Telegram Bot (Render Free Web Service)")
+    logger.info("==========================================================")
 
+    # 1. Start HTTP Health Check Web Server for Render
+    start_web_server(port=PORT)
+
+    # 2. Validate BOT_TOKEN
     if not BOT_TOKEN:
-        logger.critical("BOT_TOKEN is not configured in environment variables.")
-        sys.exit(1)
-
-    # 1. Verify MySQL / Aiven connectivity
-    logger.info("Testing MySQL Database Connection...")
-    if test_connection():
-        logger.info("✅ Successfully connected to MySQL database.")
-    else:
         logger.warning(
-            "⚠️ MySQL connection test failed or returned unhealthy. "
-            "Please verify MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE, and SSL settings."
+            "⚠️ BOT_TOKEN is empty! The HTTP health server is running on port %d, "
+            "but the Telegram bot cannot connect. Set BOT_TOKEN in .env or Render dashboard.",
+            PORT,
         )
+        # Keep web server alive so Render health checks succeed while configuring token
+        stop_event = asyncio.Event()
+        await stop_event.wait()
+        return
 
-    # 2. Build Telegram Application
+    # 3. Build Telegram Application
+    try:
+        from app.bot import create_bot_app
+    except ImportError as e:
+        logger.error("Could not import telegram bot: %s. Run 'pip install -r requirements.txt'.", e)
+        stop_event = asyncio.Event()
+        await stop_event.wait()
+        return
+
     application = create_bot_app()
 
-    # 3. Clean startup: Drop any leftover webhook to prevent 409 Conflict
+    # 4. Clean startup: Drop any leftover webhook to allow clean polling without 409 Conflict
     try:
-        logger.info("Clearing any existing Telegram webhook to allow clean long polling...")
+        logger.info("Checking & clearing any existing Telegram webhook...")
         await application.bot.delete_webhook(drop_pending_updates=False)
-        logger.info("✅ Webhook cleared successfully.")
+        logger.info("✅ Telegram webhook cleared. Polling mode ready.")
     except Exception as e:
-        logger.warning("Could not clear webhook during startup (will proceed): %s", e)
+        logger.warning("Notice on webhook check (will proceed with polling): %s", e)
 
-    # 4. Graceful shutdown registration
+    # 5. Graceful shutdown signals
     stop_event = asyncio.Event()
 
     def _signal_handler(signum, frame):
@@ -58,42 +65,42 @@ async def main():
         except (ValueError, AttributeError):
             pass
 
-    # 5. Start Application & Long Polling
+    # 6. Start Application & Long Polling
     await application.initialize()
     await application.start()
     await application.updater.start_polling(
         allowed_updates=["message", "callback_query"],
         drop_pending_updates=False,
     )
-    logger.info("🚀 Bot is actively polling Telegram for updates...")
+    logger.info("🚀 A+ Academy Bot is actively polling for Telegram updates!")
 
-    # Notify admin on startup if configured
-    if ADMIN_ID:
+    # Notify admins on startup
+    for admin_id in ADMIN_IDS:
         try:
             await application.bot.send_message(
-                chat_id=ADMIN_ID,
-                text="🚀 *A+ Academy Bot is online on Render!*",
+                chat_id=admin_id,
+                text="🚀 *A+ Academy Telegram Bot is online!* (JSON Storage • Render Web Service)",
                 parse_mode="Markdown",
             )
         except Exception:
             pass
 
-    # Wait until termination signal is caught
+    # Wait for termination signal
     await stop_event.wait()
 
-    # 6. Graceful Stop
-    logger.info("Stopping polling and shutting down Telegram application...")
+    # 7. Graceful Stop
+    logger.info("Stopping Telegram application cleanly...")
     try:
         await application.updater.stop()
         await application.stop()
         await application.shutdown()
-        logger.info("✅ Bot shutdown completed cleanly.")
+        logger.info("✅ Telegram bot shutdown completed.")
     except Exception as e:
-        logger.error("Error during application shutdown: %s", e)
+        logger.error("Error during shutdown: %s", e)
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logger.info("Bot process exited.")
+        logger.info("Process exited.")
