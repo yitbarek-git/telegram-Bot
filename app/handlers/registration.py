@@ -1,6 +1,4 @@
 import logging
-from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler
 from app.config import (
     ADMIN_IDS,
     DEFAULT_COURSE,
@@ -37,11 +35,11 @@ def get_user_lang(user_id: int) -> str:
     return DEFAULT_LANGUAGE
 
 
-async def menu_callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def menu_callback_router(update, context) -> int:
     """Handles interactive navigation across main menu, course info, and payment methods."""
     query = update.callback_query
     if not query:
-        return ConversationHandler.END
+        return 0
 
     await query.answer()
     data = query.data or ""
@@ -51,36 +49,36 @@ async def menu_callback_router(update: Update, context: ContextTypes.DEFAULT_TYP
     # 1. Main menu
     if data == "main_menu":
         await query.edit_message_text(
-            t("welcome", lang),
+            t("welcome", lang=lang),
             reply_markup=main_menu_keyboard(lang),
             parse_mode=None,
         )
-        return ConversationHandler.END
+        return 0
 
     # 2. View Freshman Courses
     if data == "view_courses":
         await query.edit_message_text(
-            t("courses_overview", lang),
+            t("courses_overview", lang=lang),
             reply_markup=payment_methods_keyboard(lang),
             parse_mode=None,
         )
-        return ConversationHandler.END
+        return 0
 
     # 3. Payment options
     if data == "pay_menu":
         await query.edit_message_text(
-            t("payment_menu_text", lang),
+            t("payment_menu_text", lang=lang),
             reply_markup=payment_methods_keyboard(lang),
             parse_mode=None,
         )
-        return ConversationHandler.END
+        return 0
 
     # 4. Telebirr details
     if data == "pay_method:telebirr":
         context.user_data["selected_method"] = "Telebirr"
         instructions = t(
             "telebirr_instructions",
-            lang,
+            lang=lang,
             phone=TELEBIRR_NUMBER,
             name=TELEBIRR_NAME,
         )
@@ -89,14 +87,14 @@ async def menu_callback_router(update: Update, context: ContextTypes.DEFAULT_TYP
             reply_markup=post_instruction_keyboard(lang),
             parse_mode=None,
         )
-        return ConversationHandler.END
+        return 0
 
     # 5. CBE Bank details
     if data == "pay_method:cbe":
         context.user_data["selected_method"] = "CBE Bank Transfer"
         instructions = t(
             "cbe_instructions",
-            lang,
+            lang=lang,
             account=CBE_ACCOUNT,
             name=CBE_NAME,
         )
@@ -105,12 +103,12 @@ async def menu_callback_router(update: Update, context: ContextTypes.DEFAULT_TYP
             reply_markup=post_instruction_keyboard(lang),
             parse_mode=None,
         )
-        return ConversationHandler.END
+        return 0
 
     # 6. User clicks 'Submit Payment' / 'Send Receipt'
     if data == "submit_receipt":
         await query.message.reply_text(
-            t("ask_receipt", lang),
+            t("ask_receipt", lang=lang),
             parse_mode=None,
         )
         return WAITING_RECEIPT
@@ -118,27 +116,27 @@ async def menu_callback_router(update: Update, context: ContextTypes.DEFAULT_TYP
     # 7. Help menu
     if data == "help_menu":
         await query.edit_message_text(
-            t("help_text", lang),
+            t("help_text", lang=lang),
             reply_markup=main_menu_keyboard(lang),
             parse_mode=None,
         )
-        return ConversationHandler.END
+        return 0
 
-    return ConversationHandler.END
+    return 0
 
 
-async def start_receipt_submission_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def start_receipt_submission_command(update, context) -> int:
     """Triggered by /pay or direct message asking to upload payment receipt."""
     user = update.effective_user
     lang = get_user_lang(user.id)
     await update.message.reply_text(
-        t("ask_receipt", lang),
+        t("ask_receipt", lang=lang),
         parse_mode=None,
     )
     return WAITING_RECEIPT
 
 
-async def receive_payment_media(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def receive_payment_media(update, context) -> int:
     """Receives receipt photo or document image and registers pending payment."""
     message = update.message
     if not message:
@@ -151,11 +149,11 @@ async def receive_payment_media(update: Update, context: ContextTypes.DEFAULT_TY
     if message.text and message.text.strip().lower() in ("/cancel", "cancel"):
         context.user_data.clear()
         await message.reply_text(
-            t("cancel_success", lang),
+            t("cancel_success", lang=lang),
             reply_markup=main_menu_keyboard(lang),
             parse_mode=None,
         )
-        return ConversationHandler.END
+        return 0
 
     # Detect photo
     if message.photo:
@@ -171,15 +169,15 @@ async def receive_payment_media(update: Update, context: ContextTypes.DEFAULT_TY
             file_type = "document"
             return await process_and_notify_payment(update, context, file_type, file_id)
         else:
-            await message.reply_text(t("not_an_image", lang), parse_mode=None)
+            await message.reply_text(t("not_an_image", lang=lang), parse_mode=None)
             return WAITING_RECEIPT
 
     # If text is sent during WAITING_RECEIPT, remind them to send an image/photo
-    await message.reply_text(t("not_an_image", lang), parse_mode=None)
+    await message.reply_text(t("not_an_image", lang=lang), parse_mode=None)
     return WAITING_RECEIPT
 
 
-async def direct_media_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def direct_media_handler(update, context) -> None:
     """Handles photo/document sent directly without entering the conversation state first."""
     message = update.message
     if not message:
@@ -201,8 +199,8 @@ async def direct_media_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def process_and_notify_payment(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
+    update,
+    context,
     file_type: str,
     file_id: str,
 ) -> int:
@@ -237,7 +235,7 @@ async def process_and_notify_payment(
         f"Student: {student_name}\n"
         f"Username: {username_str}\n"
         f"Telegram ID: {user.id}\n"
-        f"Course: Freshman Package (All Subjects)\n"
+        f"Course: Freshman Package (400 ETB)\n"
         f"Payment Method: {payment_method}\n"
         f"Amount: {DEFAULT_PRICE}\n"
         "Status: Pending\n"
@@ -270,22 +268,22 @@ async def process_and_notify_payment(
     # Send confirmation to the student
     if is_update:
         await message.reply_text(
-            t("receipt_updated_pending", lang, payment_id=payment_id, submission_count=submission_count),
+            t("receipt_updated_pending", lang=lang, payment_id=payment_id, submission_count=submission_count),
             reply_markup=main_menu_keyboard(lang),
             parse_mode=None,
         )
     else:
         await message.reply_text(
-            t("receipt_received_pending", lang, payment_id=payment_id),
+            t("receipt_received_pending", lang=lang, payment_id=payment_id),
             reply_markup=main_menu_keyboard(lang),
             parse_mode=None,
         )
 
     context.user_data.clear()
-    return ConversationHandler.END
+    return 0
 
 
-async def fallback_unrelated_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def fallback_unrelated_message(update, context) -> None:
     """
     Handles any random/unrelated user input (text, sticker, voice, video) without crashing.
     Gracefully guides them back to the Ethiopian freshman course menu.
@@ -298,7 +296,7 @@ async def fallback_unrelated_message(update: Update, context: ContextTypes.DEFAU
     lang = get_user_lang(user.id) if user else DEFAULT_LANGUAGE
 
     await message.reply_text(
-        t("unrelated_message", lang),
+        t("unrelated_message", lang=lang),
         reply_markup=main_menu_keyboard(lang),
         parse_mode=None,
     )

@@ -1,13 +1,18 @@
 import logging
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    ConversationHandler,
-    filters,
-)
 from app.config import BOT_TOKEN
+
+try:
+    from telegram.ext import (
+        Application,
+        CommandHandler,
+        MessageHandler,
+        CallbackQueryHandler,
+        ConversationHandler,
+        filters,
+    )
+except ImportError:
+    Application = None
+
 from app.handlers.common import (
     start,
     my_enrollment_command,
@@ -39,7 +44,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def create_bot_app() -> Application:
+def create_bot_app():
     """Builds and configures the Telegram Application instance."""
     if not BOT_TOKEN:
         raise ValueError("BOT_TOKEN is not set in environment or .env file.")
@@ -84,7 +89,7 @@ def create_bot_app() -> Application:
     )
     application.add_handler(
         CallbackQueryHandler(
-            switch_language_callback, pattern="^(change_language|set_lang:)"
+            switch_language_callback, pattern="^(change_language|set_lang:|start_lang:)"
         )
     )
     application.add_handler(

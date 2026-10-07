@@ -1,10 +1,14 @@
 import os
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
+
+# Base directory of the project (portable across Windows, Linux, macOS)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Telegram Bot Credentials
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
@@ -35,13 +39,21 @@ FALLBACK_GROUP_LINK = os.getenv(
     "FALLBACK_GROUP_LINK", "https://t.me/+m6ikHXVS_ss0N2Vk"
 ).strip()
 
-# Web server port for Render Free Web Service
+# HTTP Health Server Configuration (optional)
+ENABLE_HEALTH_SERVER = os.getenv("ENABLE_HEALTH_SERVER", "true").strip().lower() in ("true", "1", "yes")
+HOST = os.getenv("HOST", "0.0.0.0").strip()
 PORT = int(os.getenv("PORT", "3000"))
 
-# Storage paths
-DATA_DIR = os.getenv("DATA_DIR", "data")
-USERS_FILE = os.path.join(DATA_DIR, "users.json")
-PAYMENTS_FILE = os.path.join(DATA_DIR, "payments.json")
+# Portable Storage paths (relative to project root unless absolute path specified)
+DATA_DIR_NAME = os.getenv("DATA_DIR", "data").strip()
+if os.path.isabs(DATA_DIR_NAME):
+    DATA_DIR = Path(DATA_DIR_NAME)
+else:
+    DATA_DIR = BASE_DIR / DATA_DIR_NAME
+
+USERS_FILE = str(DATA_DIR / "users.json")
+PAYMENTS_FILE = str(DATA_DIR / "payments.json")
+DATA_DIR = str(DATA_DIR)
 
 # A+ Academy Offer & Payment Account Details (Ethiopian focused)
 DEFAULT_COURSE = "freshman"

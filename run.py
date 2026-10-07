@@ -2,7 +2,13 @@ import asyncio
 import logging
 import signal
 import sys
-from app.config import BOT_TOKEN, ADMIN_IDS, PORT
+from app.config import (
+    BOT_TOKEN,
+    ADMIN_IDS,
+    ENABLE_HEALTH_SERVER,
+    HOST,
+    PORT,
+)
 from app.web import start_web_server
 
 logging.basicConfig(
@@ -14,22 +20,25 @@ logger = logging.getLogger("aplus_bot")
 
 async def main():
     logger.info("==========================================================")
-    logger.info(" Starting A+ Academy Telegram Bot (Render Free Web Service)")
+    logger.info(" Starting A+ Academy Telegram Bot")
     logger.info("==========================================================")
 
-    # 1. Start HTTP Health Check Web Server for Render
-    start_web_server(port=PORT)
+    # 1. Start optional HTTP Health Server if enabled
+    http_server = None
+    if ENABLE_HEALTH_SERVER:
+        http_server = start_web_server(host=HOST, port=PORT)
+    else:
+        logger.info("HTTP health server disabled via ENABLE_HEALTH_SERVER=false.")
 
     # 2. Validate BOT_TOKEN
     if not BOT_TOKEN:
-        logger.warning(
-            "⚠️ BOT_TOKEN is empty! The HTTP health server is running on port %d, "
-            "but the Telegram bot cannot connect. Set BOT_TOKEN in .env or Render dashboard.",
-            PORT,
+        logger.error(
+            "❌ BOT_TOKEN is not configured! Set it as an environment variable or in .env."
         )
-        # Keep web server alive so Render health checks succeed while configuring token
-        stop_event = asyncio.Event()
-        await stop_event.wait()
+        if http_server:
+            logger.info("Health server remains active on port %d while configuring token.", PORT)
+            stop_event = asyncio.Event()
+            await stop_event.wait()
         return
 
     # 3. Build Telegram Application
@@ -37,8 +46,9 @@ async def main():
         from app.bot import create_bot_app
     except ImportError as e:
         logger.error("Could not import telegram bot: %s. Run 'pip install -r requirements.txt'.", e)
-        stop_event = asyncio.Event()
-        await stop_event.wait()
+        if http_server:
+            stop_event = asyncio.Event()
+            await stop_event.wait()
         return
 
     application = create_bot_app()
@@ -47,7 +57,7 @@ async def main():
     try:
         logger.info("Checking & clearing any existing Telegram webhook...")
         await application.bot.delete_webhook(drop_pending_updates=False)
-        logger.info("✅ Telegram webhook cleared. Polling mode ready.")
+        logger.info("Telegram webhook cleared. Polling mode ready.")
     except Exception as e:
         logger.warning("Notice on webhook check (will proceed with polling): %s", e)
 
@@ -55,15 +65,16 @@ async def main():
     stop_event = asyncio.Event()
 
     def _signal_handler(signum, frame):
-        sig_name = signal.Signals(signum).name
+        sig_name = signal.Signals(signum).name if hasattr(signal, "Signals") else str(signum)
         logger.info("Received termination signal %s. Initiating graceful shutdown...", sig_name)
         stop_event.set()
 
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        try:
-            signal.signal(sig, _signal_handler)
-        except (ValueError, AttributeError):
-            pass
+    for sig in (getattr(signal, "SIGINT", None), getattr(signal, "SIGTERM", None)):
+        if sig is not None:
+            try:
+                signal.signal(sig, _signal_handler)
+            except (ValueError, AttributeError):
+                pass
 
     # 6. Start Application & Long Polling
     await application.initialize()
@@ -72,15 +83,15 @@ async def main():
         allowed_updates=["message", "callback_query"],
         drop_pending_updates=False,
     )
-    logger.info("🚀 A+ Academy Bot is actively polling for Telegram updates!")
+    logger.info("A+ Academy Bot is actively polling for Telegram updates.")
 
     # Notify admins on startup
     for admin_id in ADMIN_IDS:
         try:
             await application.bot.send_message(
                 chat_id=admin_id,
-                text="🚀 *A+ Academy Telegram Bot is online!* (JSON Storage • Render Web Service)",
-                parse_mode="Markdown",
+                text="🚀 A+ Academy Telegram Bot is online!",
+                parse_mode=None,
             )
         except Exception:
             pass
@@ -94,9 +105,16 @@ async def main():
         await application.updater.stop()
         await application.stop()
         await application.shutdown()
-        logger.info("✅ Telegram bot shutdown completed.")
+        logger.info("Telegram bot shutdown completed.")
     except Exception as e:
-        logger.error("Error during shutdown: %s", e)
+        logger.error("Error during Telegram shutdown: %s", e)
+
+    if http_server:
+        try:
+            http_server.shutdown()
+            logger.info("Health server shutdown completed.")
+        except Exception as e:
+            logger.error("Error during HTTP server shutdown: %s", e)
 
 
 if __name__ == "__main__":

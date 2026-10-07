@@ -1,8 +1,6 @@
 import http.server
 import socketserver
-import json
 import os
-import sys
 
 PORT = int(os.getenv("PORT", "3000"))
 HOST = "0.0.0.0"
@@ -13,7 +11,7 @@ class BotStatusHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(b'{"status":"healthy","bot":"A+ Academy Telegram Bot","storage":"JSON"}')
+            self.wfile.write(b'{"status":"healthy","service":"A+ Academy Telegram Bot","storage":"JSON"}')
             return
 
         if self.path in ("/", "/index.html"):
@@ -25,7 +23,7 @@ class BotStatusHandler(http.server.SimpleHTTPRequestHandler):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A+ Academy Telegram Bot - Render Web Service</title>
+    <title>A+ Academy Telegram Bot</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -128,10 +126,10 @@ class BotStatusHandler(http.server.SimpleHTTPRequestHandler):
 <body>
     <div class="card">
         <div class="badge">
-            <span class="dot"></span> Render Free Web Service Running
+            <span class="dot"></span> Service Active
         </div>
         <h1>A+ Academy Telegram Bot</h1>
-        <p>A+ Academy course registration bot with lightweight JSON storage and built-in HTTP health check endpoint for Render.</p>
+        <p>A+ Academy course registration bot with lightweight JSON storage and built-in HTTP health check endpoint.</p>
         
         <div class="info-grid">
             <div class="info-item">

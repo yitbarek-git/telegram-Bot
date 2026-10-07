@@ -1,16 +1,16 @@
-import os
 import json
 import logging
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from app.config import PORT
+from typing import Optional
+from app.config import HOST, PORT
 from app.storage import get_admin_stats
 
 logger = logging.getLogger(__name__)
 
 
-class WebStatusHandler(BaseHTTPRequestHandler):
-    """Lightweight HTTP request handler for Render Web Service health checks."""
+class HealthStatusHandler(BaseHTTPRequestHandler):
+    """Generic HTTP request handler for health checks and status inspection."""
 
     def _send_response_data(self, status_code: int, content: bytes, content_type: str = "text/plain"):
         self.send_response(status_code)
@@ -30,7 +30,7 @@ class WebStatusHandler(BaseHTTPRequestHandler):
                 stats = get_admin_stats()
                 payload = {
                     "status": "healthy",
-                    "bot": "A+ Academy Telegram Bot",
+                    "service": "A+ Academy Telegram Bot",
                     "storage": "JSON",
                     "total_users": stats["total_users"],
                     "total_enrollments": stats["total_enrollments"],
@@ -39,7 +39,7 @@ class WebStatusHandler(BaseHTTPRequestHandler):
             except Exception:
                 payload = {
                     "status": "healthy",
-                    "bot": "A+ Academy Telegram Bot",
+                    "service": "A+ Academy Telegram Bot",
                     "storage": "JSON",
                 }
             data = json.dumps(payload).encode("utf-8")
@@ -53,10 +53,17 @@ class WebStatusHandler(BaseHTTPRequestHandler):
         pass
 
 
-def start_web_server(port: int = PORT) -> HTTPServer:
-    """Starts the HTTP health check server in a background daemon thread."""
-    server = HTTPServer(("0.0.0.0", port), WebStatusHandler)
-    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
-    server_thread.start()
-    logger.info("✅ Render Web Service HTTP server listening on port %d", port)
-    return server
+def start_web_server(host: str = HOST, port: int = PORT) -> Optional[HTTPServer]:
+    """
+    Starts a generic HTTP health check server in a background daemon thread.
+    Catches bind errors gracefully without crashing the Telegram bot.
+    """
+    try:
+        server = HTTPServer((host, port), HealthStatusHandler)
+        server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+        server_thread.start()
+        logger.info("Health server listening on http://%s:%d", host, port)
+        return server
+    except Exception as e:
+        logger.warning("Could not start optional HTTP health server on %s:%d (%s). Continuing Telegram bot.", host, port, e)
+        return None

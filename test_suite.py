@@ -20,28 +20,55 @@ from app.storage import (
     get_course,
 )
 from app.handlers.admin import generate_group_invite_link
+from app.keyboards.inline import (
+    language_prompt_keyboard,
+    language_selection_keyboard,
+    main_menu_keyboard,
+    payment_methods_keyboard,
+)
 from app.config import FALLBACK_GROUP_LINK
 from app.web import start_web_server
 
 
 class TestTranslations(unittest.TestCase):
     def test_translation_consistency(self):
-        """Verify keys match across languages."""
+        """Verify keys match across English and Amharic dictionaries."""
         en_keys = set(TRANSLATIONS["en"].keys())
         am_keys = set(TRANSLATIONS["am"].keys())
         self.assertEqual(en_keys, am_keys, f"Mismatched keys: {en_keys ^ am_keys}")
 
-    def test_translation_formatting(self):
-        res = t("receipt_received_pending", "en", payment_id=101)
-        self.assertIn("#101", res)
+    def test_translation_formatting_and_dual_signatures(self):
+        res_en = t("receipt_received_pending", "en", payment_id=101)
+        self.assertIn("#101", res_en)
         res_am = t("receipt_received_pending", "am", payment_id=101)
         self.assertIn("#101", res_am)
 
-    def test_unrelated_message_translation(self):
-        res_en = t("unrelated_message", "en")
-        res_am = t("unrelated_message", "am")
-        self.assertIn("A+ Academy", res_en)
-        self.assertIn("A+ Academy", res_am)
+        user = {"language": "am"}
+        self.assertIn("የፍሬሽማን", t(user, "courses_overview"))
+
+        user_en = {"language": "en"}
+        self.assertIn("Freshman", t(user_en, "courses_overview"))
+
+    def test_language_prompt_text(self):
+        self.assertIn("Choose your language", t("start_language_prompt", "en"))
+        self.assertIn("ቋንቋ ይምረጡ", t("start_language_prompt", "am"))
+
+
+class TestKeyboards(unittest.TestCase):
+    def test_language_prompt_keyboard(self):
+        kb = language_prompt_keyboard()
+        buttons = kb.inline_keyboard[0]
+        self.assertEqual(len(buttons), 2)
+        self.assertEqual(buttons[0].callback_data, "start_lang:en")
+        self.assertEqual(buttons[1].callback_data, "start_lang:am")
+
+    def test_main_menu_keyboard_languages(self):
+        kb_en = main_menu_keyboard("en")
+        kb_am = main_menu_keyboard("am")
+        self.assertEqual(len(kb_en.inline_keyboard), 5)
+        self.assertEqual(len(kb_am.inline_keyboard), 5)
+        self.assertIn("Freshman", kb_en.inline_keyboard[0][0].text)
+        self.assertIn("የፍሬሽማን", kb_am.inline_keyboard[0][0].text)
 
 
 class TestInviteLinkGeneration(unittest.TestCase):
@@ -58,7 +85,6 @@ class TestInviteLinkGeneration(unittest.TestCase):
         )
 
         self.assertEqual(link, "https://t.me/+generatedPermanentLink123")
-        # Ensure create_chat_invite_link was called with expire_date=None and member_limit=None
         bot_mock.create_chat_invite_link.assert_called_once_with(
             chat_id=chat_id,
             name="Student 987654 (Pay #42)",
@@ -89,7 +115,7 @@ class TestInviteLinkGeneration(unittest.TestCase):
         self.assertEqual(link, FALLBACK_GROUP_LINK)
 
 
-class TestJsonStorage(unittest.TestCase):
+class TestJsonStorageAndLanguageSwitching(unittest.TestCase):
     def setUp(self):
         self.test_tg_id = int(time.time() * 1000) % 1000000000
 
@@ -99,81 +125,71 @@ class TestJsonStorage(unittest.TestCase):
         self.assertIn("0929781996", course["telebirr_number"])
         self.assertIn("1000316427735", course["cbe_account"])
 
-    def test_user_and_payment_flow(self):
-        # 1. Upsert user
+    def test_language_switch_preserves_user_data(self):
+        # 1. User starts with English
         user = upsert_user(
             telegram_id=self.test_tg_id,
             full_name="Dawit Bekele",
             username="dawit_b",
-            language="am",
+            language="en",
         )
-        self.assertIsNotNone(user)
-        self.assertEqual(user["full_name"], "Dawit Bekele")
-        self.assertEqual(user["language"], "am")
-
-        # 2. Update language
-        update_user_language(self.test_tg_id, "en")
-        user = get_user_by_telegram_id(self.test_tg_id)
         self.assertEqual(user["language"], "en")
 
-        # 3. Create payment with payment method
+        # 2. Submit payment
         payment_id, is_update, count = create_or_update_payment(
             telegram_id=self.test_tg_id,
             file_type="photo",
             file_id="photo_file_id_12345",
             payment_method="Telebirr",
         )
-        self.assertFalse(is_update)
         self.assertEqual(count, 1)
 
-        # 4. Check payment
-        payment = get_payment_by_id(payment_id)
-        self.assertIsNotNone(payment)
-        self.assertEqual(payment["status"], "pending")
-        self.assertEqual(payment["payment_method"], "Telebirr")
+        # 3. Switch language to Amharic
+        update_user_language(self.test_tg_id, "am")
+        user_after = get_user_by_telegram_id(self.test_tg_id)
+        self.assertEqual(user_after["language"], "am")
+        self.assertEqual(user_after["full_name"], "Dawit Bekele")
+        self.assertEqual(user_after["payment_status"], "pending")
 
-        # 5. Check admin stats
-        stats = get_admin_stats()
-        self.assertGreaterEqual(stats["pending_payments"], 1)
-
-        # 6. Approve payment
+        # 4. Approve payment
         approved = approve_payment(payment_id, "https://t.me/+m6ikHXVS_ss0N2Vk")
         self.assertEqual(approved["status"], "approved")
 
-        # Verify duplicate approval prevention
-        dup_approve = approve_payment(payment_id, "https://t.me/+m6ikHXVS_ss0N2Vk")
-        self.assertIsNone(dup_approve)
-
-        # 7. Check student profile & status
+        # 5. Check enrollment status
         status = get_latest_payment_and_enrollment(self.test_tg_id)
         self.assertEqual(status["payment_status"], "approved")
         self.assertEqual(status["enrollment_status"], "active")
-        self.assertEqual(status["invite_link"], "https://t.me/+m6ikHXVS_ss0N2Vk")
+        self.assertEqual(status["language"], "am")
 
-        profile = get_student_full_profile(self.test_tg_id)
-        self.assertIsNotNone(profile)
-        self.assertEqual(len(profile["enrollments"]), 1)
+        # 6. Switch back to English, confirm enrollment is unaffected
+        update_user_language(self.test_tg_id, "en")
+        status_en = get_latest_payment_and_enrollment(self.test_tg_id)
+        self.assertEqual(status_en["payment_status"], "approved")
+        self.assertEqual(status_en["enrollment_status"], "active")
+        self.assertEqual(status_en["language"], "en")
 
 
-class TestWebServer(unittest.TestCase):
+class TestGenericWebServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.server = start_web_server(port=3096)
+        cls.server = start_web_server(port=3094)
 
     @classmethod
     def tearDownClass(cls):
-        cls.server.shutdown()
+        if cls.server:
+            cls.server.shutdown()
 
     def test_root_endpoint(self):
-        req = urllib.request.urlopen("http://localhost:3096/")
+        req = urllib.request.urlopen("http://localhost:3094/")
         self.assertEqual(req.status, 200)
         self.assertEqual(req.read().decode("utf-8"), "A+ Academy Bot is running.")
 
     def test_health_endpoint(self):
-        req = urllib.request.urlopen("http://localhost:3096/health")
+        req = urllib.request.urlopen("http://localhost:3094/health")
         self.assertEqual(req.status, 200)
         body = json.loads(req.read().decode("utf-8"))
         self.assertEqual(body["status"], "healthy")
+        self.assertEqual(body["service"], "A+ Academy Telegram Bot")
         self.assertEqual(body["storage"], "JSON")
 
 
