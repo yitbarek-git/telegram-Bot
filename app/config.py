@@ -60,10 +60,10 @@ DEFAULT_COURSE = "freshman"
 DEFAULT_PRICE = os.getenv("COURSE_PRICE", "400 ETB").strip()
 
 TELEBIRR_NUMBER = os.getenv("TELEBIRR_NUMBER", "0929781996").strip()
-TELEBIRR_NAME = os.getenv("TELEBIRR_NAME", "A+ Academy / Amanuel").strip()
+TELEBIRR_NAME = os.getenv("TELEBIRR_NAME", "Yitbarek").strip()
 
 CBE_ACCOUNT = os.getenv("CBE_ACCOUNT", "1000316427735").strip()
-CBE_NAME = os.getenv("CBE_NAME", "A+ Academy / Amanuel").strip()
+CBE_NAME = os.getenv("CBE_NAME", "Yitbarek").strip()
 
 DEFAULT_LANGUAGE = "en"
 SUPPORTED_LANGUAGES = ["en", "am"]

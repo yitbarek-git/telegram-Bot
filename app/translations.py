@@ -1,7 +1,4 @@
-"""
-Translations module for A+ Academy Telegram Bot.
-Academic, clean, professional plain-text strings in English & Amharic.
-"""
+"""Translations module for A+ Academy Telegram Bot."""
 
 TRANSLATIONS = {
     "en": {
@@ -20,14 +17,15 @@ TRANSLATIONS = {
             "Program: Freshman Complete Package\n"
             "Price: 400 ETB (One-time)\n\n"
             "Subjects Included:\n"
-            "• Mathematics (Applied & Social)\n"
-            "• Communicative English\n"
-            "• General Physics\n"
-            "• Critical Thinking & Logic\n"
+            "• Mathematics (Natural & Social)\n"
+            "• Communicative English skill 1 & 2\n"
+            "• Physics\n"
+            "• Logic & Critical Thinking\n"
             "• General Psychology\n"
             "• Economics\n"
-            "• Emerging Technologies\n"
-            "• History of Ethiopia & the Horn\n"
+            "• Emerging Technology\n"
+            "• History \n"
+            "• Geography\n"
             "• Anthropology\n"
             "• Physical Fitness & Programming\n\n"
             "Includes: Video tutorials, summary PDFs, mid & final solved exams.\n\n"
@@ -125,8 +123,8 @@ TRANSLATIONS = {
         ),
         "welcome": (
             "🎓 A+ Academy\n\n"
-            "እንኳን ወደ አፕላስ አካዳሚ የፍሬሽማን ትምህርት በደህና መጡ።\n\n"
-            "የፓኬጅ ዋጋ፦ 400 ETB (የሙሉ አመት ትምህርት)\n\n"
+            "እንኳን ወደ Aplus academy የፍሬሽማን ትምህርት በደህና መጡ።\n\n"
+            "ዋጋ፦ 400 ብር ብቻ (ለሙሉ አመት )\n\n"
             "ከታች ካሉት አማራጮች አንዱን ይምረጡ፦"
         ),
         "courses_overview": (
@@ -175,15 +173,15 @@ TRANSLATIONS = {
             "3. ያነሱትን Screenshot እዚህ በፎቶ ወይም በምስል ፋይል ይላኩ።"
         ),
         "ask_receipt": (
-            "📸 የክፍያ ደረሰኝ መላክ\n\n"
+            "📸  ደረሰኝ ይላኩ\n\n"
             "እባክዎ የከፈሉበትን ትክክለኛ ደረሰኝ በፎቶ ወይም በምስል ፋይል አሁን ይላኩ።\n\n"
             "ለማቋረጥ /cancel ይላኩ።"
         ),
         "receipt_received_pending": (
             "✅ የክፍያ ደረሰኝዎ ደርሶናል\n\n"
             "የደረሰኝ መለያ፦ #{payment_id}\n"
-            "ሁኔታ፦ በማረጋገጥ ላይ (Pending)\n\n"
-            "የክፍያ ደረሰኝዎ ደርሷል። እባክዎ የአስተዳዳሪውን ማረጋገጫ ይጠብቁ።\n"
+            "ሁኔታ፦ በመረጋገጥ ላይ (Pending)\n\n"
+            "የክፍያ ደረሰኝዎ ደርሷል። እባክዎ የAdmin ማረጋገጫ ይጠብቁ።\n"
             "ክፍያው እንደተረጋገጠ የፕራይቬት ግሩፕ ሊንክ ይደርስዎታል።"
         ),
         "receipt_updated_pending": (
@@ -194,7 +192,7 @@ TRANSLATIONS = {
         ),
         "approval_student_message": (
             "✅ ምዝገባዎ ተረጋግጧል\n\n"
-            "እንኳን ወደ A+ Academy የፍሬሽማን ባች በደህና መጡ!\n\n"
+            "እንኳን ወደ A+ Academy የፍሬሽማን courses በደህና መጡ!\n\n"
             "የፕራይቬት ቴሌግራም ግሩፕ ሊንክዎ፦\n{invite_link}\n\n"
             "የቪዲዮ ትምህርቶችንና የፈተና ጥያቄዎችን ለማግኘት ሊንኩን ተጭነው ይቀላቀሉ።"
         ),
