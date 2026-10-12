@@ -235,7 +235,7 @@ async def process_and_notify_payment(
         f"Student: {student_name}\n"
         f"Username: {username_str}\n"
         f"Telegram ID: {user.id}\n"
-        f"Course: Freshman Package (400 ETB)\n"
+        f"Course: Freshman Package (300 ETB)\n"
         f"Payment Method: {payment_method}\n"
         f"Amount: {DEFAULT_PRICE}\n"
         "Status: Pending\n"

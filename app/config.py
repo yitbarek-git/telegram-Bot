@@ -57,7 +57,7 @@ DATA_DIR = str(DATA_DIR)
 
 # A+ Academy Offer & Payment Account Details (Ethiopian focused)
 DEFAULT_COURSE = "freshman"
-DEFAULT_PRICE = os.getenv("COURSE_PRICE", "400 ETB").strip()
+DEFAULT_PRICE = os.getenv("COURSE_PRICE", "300 ETB").strip()
 
 TELEBIRR_NUMBER = os.getenv("TELEBIRR_NUMBER", "0929781996").strip()
 TELEBIRR_NAME = os.getenv("TELEBIRR_NAME", "Yitbarek").strip()

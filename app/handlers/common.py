@@ -148,14 +148,14 @@ async def my_enrollment_command(update, context) -> None:
                 "❌ አልተረጋገጠም (Rejected)\n\n"
                 f"ተማሪ፦ {name}\n"
                 f"የደረሰኝ መለያ፦ #{record.get('payment_id')}\n\n"
-                "የላኩት ደረሰኝ አልተረጋገጠም። እባክዎ ትክክለኛውን የ400 ETB ደረሰኝ በድጋሚ ይላኩ።"
+                "የላኩት ደረሰኝ አልተረጋገጠም። እባክዎ ትክክለኛውን የ300 ETB ደረሰኝ በድጋሚ ይላኩ።"
             )
         else:
             text = (
                 "❌ Payment Not Approved\n\n"
                 f"Student: {name}\n"
                 f"Receipt ID: #{record.get('payment_id')}\n\n"
-                "Your receipt was not approved. Please submit a valid 400 ETB payment screenshot."
+                "Your receipt was not approved. Please submit a valid 300 ETB payment screenshot."
             )
     else:
         text = t("welcome", lang=lang)

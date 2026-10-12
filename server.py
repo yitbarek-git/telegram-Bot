@@ -138,7 +138,7 @@ class BotStatusHandler(http.server.SimpleHTTPRequestHandler):
             </div>
             <div class="info-item">
                 <div class="info-label">Offer</div>
-                <div class="info-val">400 ETB (Freshman)</div>
+                <div class="info-val">300 ETB (Freshman)</div>
             </div>
             <div class="info-item">
                 <div class="info-label">Languages</div>

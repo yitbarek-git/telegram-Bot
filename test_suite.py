@@ -121,7 +121,7 @@ class TestJsonStorageAndLanguageSwitching(unittest.TestCase):
 
     def test_course_information(self):
         course = get_course("freshman")
-        self.assertEqual(course["price"], "400 ETB")
+        self.assertEqual(course["price"], "300 ETB")
         self.assertIn("0929781996", course["telebirr_number"])
         self.assertIn("1000316427735", course["cbe_account"])
 
