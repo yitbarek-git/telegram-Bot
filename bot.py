@@ -43,7 +43,7 @@ if GROUP_ID >= 0:
     )
 
 COURSE_NAME = "All Freshman Courses"
-COURSE_NAME_AM = "የመጀመሪያ ዓመት university courses ሁሉንም"
+COURSE_NAME_AM = "የመጀመሪያ ዓመት ትምህርቶች ሁሉም"
 COURSE_PRICE = "300 ETB"
 
 TELEBIRR_NUMBER = "0929781996"
@@ -100,6 +100,7 @@ class Enrollment:
 users_db: dict[int, Enrollment] = {}
 approved_users: set[int] = set()
 _last_action: dict[int, float] = {}
+
 
 # Helpers
 def h(text) -> str:
@@ -168,6 +169,7 @@ def payment_instructions_html() -> str:
         f"📸 ከከፈሉ በኋላ የደረሰኙን ስክሪንሾት አንስተው እዚህ ይላኩ።"
     )
 
+
 # Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.effective_user
@@ -185,13 +187,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return ConversationHandler.END
 
-    if user.id in approved_users:
-        await update.message.reply_text(
-            "✅ You are already enrolled. Type /help for assistance.\n"
-            "✅ አስቀድመው ተመዝግበዋል። እርዳታ ከፈለጉ /help ይጻፉ።",
-            reply_markup=ReplyKeyboardRemove(),
-        )
-        return ConversationHandler.END
+    # Students are free to (re-)enroll at any time.
 
     await update.message.reply_text(
         "👋 <b>Welcome to A+ Academy!</b>\n"
@@ -208,7 +204,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def payment_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    # Interactive guard — if they send a photo instead of a name
     if update.message.photo:
         await _reply(
             update,
@@ -262,7 +257,6 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await _reply(update, "⚠️ Admin cannot enroll. Use /status to review students.")
         return ConversationHandler.END
 
-    # Interactive guard — text sent instead of photo
     if not update.message.photo:
         await _reply(
             update,
@@ -272,19 +266,11 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             "1️⃣ Open your payment app → take a screenshot\n"
             "2️⃣ In this chat, tap 📎 → <b>Gallery</b> → select the screenshot → send\n\n"
             "📸 እንዴት እንደሚላኩ፦\n"
-            "1️⃣ የክፍያ መተግባሪያውን ከፍተው ስክሪንሾት ያንሱ\n"
+            "1️⃣ የክፍያ መተግበሪያውን ከፍተው ስክሪንሾት ያንሱ\n"
             "2️⃣ በዚህ ውይይት 📎 ን ተጭነው → <b>ጋለሪ</b> → ስክሪንሾቱን ይምረጡ → ይላኩ",
             parse_mode=ParseMode.HTML,
         )
         return PAYMENT
-
-    if user.id in approved_users:
-        await _reply(
-            update,
-            "✅ You're already enrolled — no need to send again.\n"
-            "✅ አስቀድመው ተመዝግበዋል — እንደገና መላክ አያስፈልግም።",
-        )
-        return ConversationHandler.END
 
     if not cooldown_ok(user.id, SUBMIT_COOLDOWN_SEC):
         await _reply(
