@@ -472,18 +472,27 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 )
                 enrollment.invite_link = link.invite_link
 
+            # Clickable join button + bare tappable URL in body
+            invite_keyboard = InlineKeyboardMarkup(
+                [[InlineKeyboardButton(
+                    "🚀 Join Private Group · ቡድኑን ይቀላቀሉ",
+                    url=enrollment.invite_link,
+                )]]
+            )
             await context.bot.send_message(
                 chat_id=student_id,
                 text=(
                     "🎉 <b>Payment verified — welcome to A+ Academy!</b>\n"
                     "🎉 <b>ክፍያዎ ተረጋግጧል — ወደ A+ አካዳሚ እንኳን በደህና መጡ!</b>\n\n"
-                    "👉 Tap the link below to join your private class group:\n"
-                    "👉 የግል ትምህርት ቡድንዎን ለመቀላቀል ከታች ያለውን ሊንክ ይጫኑ፦\n"
-                    f"<pre>{h(enrollment.invite_link)}</pre>\n"
+                    "👉 Tap the button below to join your private class group:\n"
+                    "👉 የግል ትምህርት ቡድንዎን ለመቀላቀል ከታች ያለውን ቁልፍ ይጫኑ፦\n\n"
+                    f"{enrollment.invite_link}\n\n"
                     "🔒 This link works once — please do not share it.\n"
                     "🔒 ሊንኩ አንድ ጊዜ ብቻ ይሰራል — እባክዎ አያጋሩት።"
                 ),
                 parse_mode=ParseMode.HTML,
+                reply_markup=invite_keyboard,
+                disable_web_page_preview=True,
             )
             enrollment.status = "approved"
             approved_users.add(student_id)
