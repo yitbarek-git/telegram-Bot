@@ -2,8 +2,10 @@ import os
 import re
 import time
 import logging
+import threading
 from dataclasses import dataclass
 from html import escape
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from dotenv import load_dotenv
 from telegram import (
@@ -33,9 +35,6 @@ if ADMIN_ID <= 0:
         f"ADMIN_ID must be a positive integer (your personal Telegram id). Got: {ADMIN_ID}"
     )
 
-# GROUP_ID is a chat id for a group/supergroup → always NEGATIVE.
-#   supergroup: -1001234567890
-#   legacy group: -123456789
 if GROUP_ID >= 0:
     raise RuntimeError(
         f"GROUP_ID must be a negative integer (supergroup id looks like -1001234567890).\n"
@@ -54,7 +53,6 @@ CBE_ACCOUNT_NAME = "Yitbarek Yohans"
 CBE_ACCOUNT_NUMBER = "1000316427735"
 CBE_BANK_NAME = "CBE · ንግድ ባንክ"
 
-# Defensive limits
 MAX_CAPTION_LEN = 1024
 MIN_NAME_LEN = 2
 MAX_NAME_LEN = 100
@@ -72,6 +70,26 @@ NAME, PAYMENT = range(2)
 
 
 # ---------------------------------------------------------------------------
+# Health server (for Render Web Service health check)
+# ---------------------------------------------------------------------------
+class _Health(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"ok")
+
+    def log_message(self, *args):
+        pass  # silence per-request logs
+
+
+def _start_health_server():
+    port = int(os.environ.get("PORT", 3000))
+    server = HTTPServer(("0.0.0.0", port), _Health)
+    logger.info("Health server listening on 0.0.0.0:%d", port)
+    server.serve_forever()
+
+
+# ---------------------------------------------------------------------------
 # Store
 # ---------------------------------------------------------------------------
 @dataclass
@@ -80,7 +98,7 @@ class Enrollment:
     name: str
     username: str | None
     course: str = COURSE_NAME
-    status: str = "pending"                # pending | approved | rejected
+    status: str = "pending"
     admin_message_id: int | None = None
     invite_link: str | None = None
     submitted_at: float = 0.0
@@ -346,7 +364,6 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Admin-only: /status <user_id>"""
     if update.effective_user.id != ADMIN_ID:
         await update.message.reply_text("Not authorized.")
         return
@@ -382,9 +399,6 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     )
 
 
-# ---------------------------------------------------------------------------
-# Admin decision
-# ---------------------------------------------------------------------------
 async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
 
@@ -503,9 +517,6 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             )
 
 
-# ---------------------------------------------------------------------------
-# Error handler
-# ---------------------------------------------------------------------------
 async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.exception("Unhandled exception", exc_info=context.error)
     if isinstance(update, Update) and update.effective_chat:
@@ -521,9 +532,6 @@ async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
             pass
 
 
-# ---------------------------------------------------------------------------
-# App setup
-# ---------------------------------------------------------------------------
 def build_app() -> Application:
     request = HTTPXRequest(
         connection_pool_size=8,
@@ -563,6 +571,7 @@ def build_app() -> Application:
 
 
 def main() -> None:
+    threading.Thread(target=_start_health_server, daemon=True).start()
     app = build_app()
     logger.info("🤖 Bot is running...")
     app.run_polling(
