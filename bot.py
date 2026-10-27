@@ -18,7 +18,6 @@ from telegram.ext import (
 )
 from telegram.request import HTTPXRequest
 
-# Config
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -67,7 +66,6 @@ logger = logging.getLogger("academy-bot")
 NAME, PAYMENT = range(2)
 
 
-# Health server
 class _Health(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -85,7 +83,6 @@ def _start_health_server():
     server.serve_forever()
 
 
-# Store
 @dataclass
 class Enrollment:
     user_id: int
@@ -102,7 +99,6 @@ approved_users: set[int] = set()
 _last_action: dict[int, float] = {}
 
 
-# Helpers
 def h(text) -> str:
     return escape(str(text)) if text is not None else ""
 
@@ -170,7 +166,6 @@ def payment_instructions_html() -> str:
     )
 
 
-# Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.effective_user
 
@@ -186,8 +181,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             reply_markup=ReplyKeyboardRemove(),
         )
         return ConversationHandler.END
-
-    # Students are free to (re-)enroll at any time.
 
     await update.message.reply_text(
         "👋 <b>Welcome to A+ Academy!</b>\n"
@@ -424,6 +417,84 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     )
 
 
+async def fallback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = (update.message.text or "").strip().lower()
+
+    greetings = {
+        "hi", "hello", "hey", "salam", "selam", "ሰላም", "ሰላምታ",
+        "good morning", "good afternoon", "good evening",
+    }
+    if text in greetings:
+        await _reply(
+            update,
+            "👋 Hello! · ሰላም!\n\n"
+            "To start enrollment, type /start or send your <b>full name</b>.\n"
+            "ለመመዝገብ /start ይጻፉ ወይም <b>ሙሉ ስምዎን</b> ይላኩ።",
+            parse_mode=ParseMode.HTML,
+        )
+    else:
+        await _reply(
+            update,
+            "🤔 I didn't catch that.\n"
+            "🤔 ያንን አልገባኝም።\n\n"
+            "Send /start to register, or /help for instructions.\n"
+            "ለመመዝገብ /start ይጻፉ፣ ወይም ለመመሪያ /help ይጻፉ።",
+            parse_mode=ParseMode.HTML,
+        )
+
+    if context.user_data.get("name"):
+        return PAYMENT
+    return NAME
+
+
+async def catchall_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+
+    if user and user.id == ADMIN_ID:
+        await _reply(update, "ℹ️ Admin — use /status or /help.")
+        return
+
+    if update.message and update.message.text:
+        text = update.message.text.strip().lower()
+        greetings = {
+            "hi", "hello", "hey", "salam", "selam", "ሰላም", "ሰላምታ",
+            "good morning", "good afternoon", "good evening",
+            "help", "start", "register", "enroll", "join",
+        }
+        if text in greetings:
+            await _reply(
+                update,
+                "👋 Hello and welcome!\n"
+                "👋 ሰላም፣ እንኳን በደህና መጡ!\n\n"
+                "Tap /start to enroll, or /help for the steps.\n"
+                "ለመመዝገብ /start ይጫኑ፣ ወይም ደረጃዎቹን ለማየት /help ይጫኑ።",
+                parse_mode=ParseMode.HTML,
+            )
+            return
+
+    await _reply(
+        update,
+        "👋 Welcome to A+ Academy!\n"
+        "👋 ወደ A+ አካዳሚ እንኳን በደህና መጡ!\n\n"
+        "To begin enrollment, send /start.\n"
+        "ምዝገባን ለመጀመር /start ይላኩ።\n"
+        "For help, send /help.\n"
+        "ለእርዳታ /help ይላኩ።",
+        parse_mode=ParseMode.HTML,
+    )
+
+
+async def catchall_non_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _reply(
+        update,
+        "🤖 I can only work with text and screenshots.\n"
+        "🤖 በጽሑፍ እና በስክሪንሾት ብቻ ነው የምሰራው።\n\n"
+        "Send /start to enroll.\n"
+        "ለመመዝገብ /start ይላኩ።",
+        parse_mode=ParseMode.HTML,
+    )
+
+
 async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
 
@@ -472,7 +543,6 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 )
                 enrollment.invite_link = link.invite_link
 
-            # Clickable join button + bare tappable URL in body
             invite_keyboard = InlineKeyboardMarkup(
                 [[InlineKeyboardButton(
                     "🚀 Join Private Group · ቡድኑን ይቀላቀሉ",
@@ -583,13 +653,22 @@ def build_app() -> Application:
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            NAME: [MessageHandler(filters.ALL & ~filters.COMMAND, payment_info)],
-            PAYMENT: [MessageHandler(filters.ALL & ~filters.COMMAND, receive_payment)],
+            NAME: [
+                MessageHandler(filters.COMMAND, fallback_text),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, payment_info),
+                MessageHandler(~filters.TEXT, fallback_text),
+            ],
+            PAYMENT: [
+                MessageHandler(filters.COMMAND, fallback_text),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_payment),
+                MessageHandler(~filters.TEXT & ~filters.PHOTO, receive_payment),
+            ],
         },
         fallbacks=[
             CommandHandler("cancel", cancel),
             CommandHandler("start", start),
             CommandHandler("help", help_cmd),
+            MessageHandler(filters.ALL, fallback_text),
         ],
         allow_reentry=True,
     )
@@ -601,6 +680,8 @@ def build_app() -> Application:
     app.add_handler(
         CallbackQueryHandler(admin_decision, pattern=r"^(approve|reject):\d+$")
     )
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, catchall_message))
+    app.add_handler(MessageHandler(~filters.TEXT, catchall_non_text))
     app.add_error_handler(on_error)
     return app
 
