@@ -1,34 +1,6 @@
-# Environments & Secrets
 .env
-.env.local
-.env.*.local
-*.env
-
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
+*.pyc
+.venv/
 venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Local JSON Data (Keeps user data out of git repositories)
-data/*.json
-data/
-!data/.gitkeep
-
-# SQLite / Database dumps
-*.db
-*.sqlite
-*.sqlite3
-
-# OS / Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
+*.log
