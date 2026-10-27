@@ -18,9 +18,7 @@ from telegram.ext import (
 )
 from telegram.request import HTTPXRequest
 
-# ---------------------------------------------------------------------------
 # Config
-# ---------------------------------------------------------------------------
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -45,7 +43,7 @@ if GROUP_ID >= 0:
     )
 
 COURSE_NAME = "All Freshman Courses"
-COURSE_NAME_AM = "የመጀመሪያ ዓመት ትምህርቶች ሁሉም"
+COURSE_NAME_AM = "የመጀመሪያ ዓመት university courses ሁሉንም"
 COURSE_PRICE = "300 ETB"
 
 TELEBIRR_NUMBER = "0929781996"
@@ -54,7 +52,7 @@ CBE_ACCOUNT_NUMBER = "1000316427735"
 CBE_BANK_NAME = "CBE · ንግድ ባንክ"
 
 MAX_CAPTION_LEN = 1024
-MIN_NAME_LEN = 2
+MIN_NAME_LEN = 3
 MAX_NAME_LEN = 100
 MIN_PHOTO_BYTES = 8 * 1024
 SUBMIT_COOLDOWN_SEC = 15
@@ -69,9 +67,7 @@ logger = logging.getLogger("academy-bot")
 NAME, PAYMENT = range(2)
 
 
-# ---------------------------------------------------------------------------
-# Health server (for Render Web Service health check)
-# ---------------------------------------------------------------------------
+# Health server
 class _Health(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -79,7 +75,7 @@ class _Health(BaseHTTPRequestHandler):
         self.wfile.write(b"ok")
 
     def log_message(self, *args):
-        pass  # silence per-request logs
+        pass
 
 
 def _start_health_server():
@@ -89,9 +85,7 @@ def _start_health_server():
     server.serve_forever()
 
 
-# ---------------------------------------------------------------------------
 # Store
-# ---------------------------------------------------------------------------
 @dataclass
 class Enrollment:
     user_id: int
@@ -107,10 +101,7 @@ users_db: dict[int, Enrollment] = {}
 approved_users: set[int] = set()
 _last_action: dict[int, float] = {}
 
-
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
 def h(text) -> str:
     return escape(str(text)) if text is not None else ""
 
@@ -118,8 +109,12 @@ def h(text) -> str:
 def clean_name(raw: str) -> str:
     if not raw:
         return ""
-    cleaned = re.sub(r"[\x00-\x1f\x7f]", "", raw)
+    cleaned = re.sub(r"[\x00-\x1f\x7f<>]", "", raw)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if cleaned.isdigit():
+        return ""
+    if not any(ch.isalpha() for ch in cleaned):
+        return ""
     return cleaned
 
 
@@ -149,6 +144,12 @@ async def _reply(update: Update, text: str, **kwargs) -> None:
         logger.exception("Failed to reply to user %s", uid)
 
 
+def _progress_hint(step: int) -> str:
+    if step == 1:
+        return "\n\n<i>Step 1 of 2 · ደረጃ 1 ከ 2</i>"
+    return "\n\n<i>Step 2 of 2 · ደረጃ 2 ከ 2</i>"
+
+
 def payment_instructions_html() -> str:
     return (
         f"💵 <b>Price:</b> {h(COURSE_PRICE)} — one payment, all courses.\n"
@@ -167,10 +168,7 @@ def payment_instructions_html() -> str:
         f"📸 ከከፈሉ በኋላ የደረሰኙን ስክሪንሾት አንስተው እዚህ ይላኩ።"
     )
 
-
-# ---------------------------------------------------------------------------
 # Handlers
-# ---------------------------------------------------------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.effective_user
 
@@ -201,7 +199,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         f"📚 Enroll in <b>{h(COURSE_NAME)}</b> with one payment.\n"
         f"📚 በአንድ ክፍያ <b>{h(COURSE_NAME_AM)}</b> ይመዝገቡ።\n\n"
         "✍️ Type your <b>full name</b>:\n"
-        "✍️ <b>ሙሉ ስምዎን</b> ይጻፉ፦",
+        "✍️ <b>ሙሉ ስምዎን</b> ይጻፉ፦"
+        + _progress_hint(1),
         parse_mode=ParseMode.HTML,
         reply_markup=ReplyKeyboardRemove(),
     )
@@ -209,20 +208,38 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def payment_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    name = clean_name(update.message.text or "")
-
-    if len(name) < MIN_NAME_LEN:
+    # Interactive guard — if they send a photo instead of a name
+    if update.message.photo:
         await _reply(
             update,
-            "⚠️ Please send your real name (at least 2 characters).\n"
-            "⚠️ እባክዎ እውነተኛ ስምዎን ይጻፉ (ቢያንስ 2 ፊደል)።",
+            "⚠️ That's an image. First, please <b>type your full name</b> as text.\n"
+            "⚠️ ያ ምስል ነው። በመጀመሪያ <b>ሙሉ ስምዎን</b> በጽሑፍ ይጻፉ።\n\n"
+            "✍️ Type your full name:\n"
+            "✍️ ሙሉ ስምዎን ይጻፉ፦",
+            parse_mode=ParseMode.HTML,
+        )
+        return NAME
+
+    name = clean_name(update.message.text or "")
+
+    if not name or len(name) < MIN_NAME_LEN:
+        await _reply(
+            update,
+            "⚠️ Please type your <b>real name using letters</b> (at least 2 characters).\n"
+            "⚠️ እባክዎ <b>በፊደል</b> እውነተኛ ስምዎን ይጻፉ (ቢያንስ 2 ፊደል)።\n\n"
+            "✍️ Type your full name:\n"
+            "✍️ ሙሉ ስምዎን ይጻፉ፦",
+            parse_mode=ParseMode.HTML,
         )
         return NAME
     if len(name) > MAX_NAME_LEN:
         await _reply(
             update,
-            "⚠️ Name is too long. Please use 100 characters or fewer.\n"
-            "⚠️ ስሙ በጣም ረጅም ነው። ከ100 ፊደል በታች ይጠቀሙ።",
+            "⚠️ Name is too long — please use 100 characters or fewer.\n"
+            "⚠️ ስሙ በጣም ረጅም ነው — ከ100 ፊደል በታች ይጠቀሙ።\n\n"
+            "✍️ Type your full name:\n"
+            "✍️ ሙሉ ስምዎን ይጻፉ፦",
+            parse_mode=ParseMode.HTML,
         )
         return NAME
 
@@ -231,7 +248,8 @@ async def payment_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     await update.message.reply_text(
         payment_instructions_html()
         + "\n\n📸 <b>Send the screenshot now.</b>\n"
-          "📸 <b>አሁን ስክሪንሾቱን ይላኩ።</b>",
+          "📸 <b>አሁን ስክሪንሾቱን ይላኩ።</b>"
+        + _progress_hint(2),
         parse_mode=ParseMode.HTML,
     )
     return PAYMENT
@@ -244,11 +262,18 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await _reply(update, "⚠️ Admin cannot enroll. Use /status to review students.")
         return ConversationHandler.END
 
+    # Interactive guard — text sent instead of photo
     if not update.message.photo:
         await _reply(
             update,
-            "⚠️ Please send a <b>screenshot image</b> (not text, not a file).\n"
-            "⚠️ እባክዎ <b>የስክሪንሾት ምስል</b> ይላኩ (ጽሑፍ ወይም ፋይል አይደለም)።",
+            "⚠️ Please send the <b>screenshot as an image</b> — not text, not a document.\n"
+            "⚠️ እባክዎ <b>ስክሪንሾቱን እንደ ምስል</b> ይላኩ — ጽሑፍ ወይም ሰነድ አይደለም።\n\n"
+            "📸 How to send:\n"
+            "1️⃣ Open your payment app → take a screenshot\n"
+            "2️⃣ In this chat, tap 📎 → <b>Gallery</b> → select the screenshot → send\n\n"
+            "📸 እንዴት እንደሚላኩ፦\n"
+            "1️⃣ የክፍያ መተግባሪያውን ከፍተው ስክሪንሾት ያንሱ\n"
+            "2️⃣ በዚህ ውይይት 📎 ን ተጭነው → <b>ጋለሪ</b> → ስክሪንሾቱን ይምረጡ → ይላኩ",
             parse_mode=ParseMode.HTML,
         )
         return PAYMENT
@@ -273,8 +298,8 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if best.file_size and best.file_size < MIN_PHOTO_BYTES:
         await _reply(
             update,
-            "⚠️ The image is too small to read. Please send a full screenshot.\n"
-            "⚠️ ምስሉ በጣም ትንሽ ነው። ሙሉ ስክሪንሾት ይላኩ።",
+            "⚠️ The image is too small to read — please send a clearer, full screenshot.\n"
+            "⚠️ ምስሉ በጣም ትንሽ ነው — ግልጽ ሙሉ ስክሪንሾት ይላኩ።",
         )
         return PAYMENT
 
@@ -325,8 +350,8 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         logger.exception("Failed to forward payment to admin for user %s", user.id)
         await _reply(
             update,
-            "⚠️ We couldn't reach the admin right now. Please try again later.\n"
-            "⚠️ ለአስተዳዳሪው መልእክት መላክ አልተቻለም። እባክዎ ቆይተው ይሞክሩ።",
+            "⚠️ We couldn't reach the admin right now. Please try again in a minute.\n"
+            "⚠️ ለአስተዳዳሪው መልእክት መላክ አልተቻለም። እባክዎ ከአንድ ደቂቃ በኋላ ይሞክሩ።",
         )
         return ConversationHandler.END
 
@@ -336,7 +361,9 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         "⏳ An admin will verify your payment shortly.\n"
         "⏳ You'll get your private group link once approved.\n"
         "⏳ አስተዳዳሪው ክፍያዎን በቅርቡ ያረጋግጣል።\n"
-        "⏳ ሲፈቀድ የግል ቡድንዎ ሊንክ ይደርስዎታል።",
+        "⏳ ሲፈቀድ የግል ቡድንዎ ሊንክ ይደርስዎታል።\n\n"
+        "🔕 You don't need to send anything else.\n"
+        "🔕 ተጨማሪ ነገር መላክ አያስፈልግም።",
         parse_mode=ParseMode.HTML,
     )
     context.user_data.clear()
@@ -355,10 +382,22 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
-        "ℹ️ <b>Commands</b>\n"
-        "/start  – Begin enrollment · ምዝገባ ለመጀመር\n"
-        "/cancel – Cancel enrollment · ምዝገባን ለመሰረዝ\n"
-        "/help   – Show this message · ይህን መልእክት ለማየት",
+        "ℹ️ <b>How to register · እንዴት እንደሚመዘገቡ</b>\n\n"
+        "1️⃣ Type /start to begin.\n"
+        "1️⃣ ለመጀመር /start ይጻፉ።\n\n"
+        "2️⃣ Send your <b>full name</b> as text.\n"
+        "2️⃣ <b>ሙሉ ስምዎን</b> በጽሑፍ ይላኩ።\n\n"
+        f"3️⃣ Pay {h(COURSE_PRICE)} via Telebirr or CBE.\n"
+        f"3️⃣ {h(COURSE_PRICE)} በቴሌብር ወይም በንግድ ባንክ ይክፈሉ።\n\n"
+        "4️⃣ Send the <b>screenshot</b> of your receipt here.\n"
+        "4️⃣ የደረሰኙን <b>ስክሪንሾት</b> እዚህ ይላኩ።\n\n"
+        "5️⃣ Wait for approval — you'll receive a private group link.\n"
+        "5️⃣ ማረጋገጫ ይጠብቁ — የግል ቡድን ሊንክ ይደርስዎታል።\n\n"
+        "───────────\n"
+        "<b>Commands · ትዕዛዞች</b>\n"
+        "/start  · መጀመር · Begin\n"
+        "/cancel · መሰረዝ · Cancel\n"
+        "/help   · ይህ መልእክት · This help",
         parse_mode=ParseMode.HTML,
     )
 
@@ -454,7 +493,7 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     "🎉 <b>ክፍያዎ ተረጋግጧል — ወደ A+ አካዳሚ እንኳን በደህና መጡ!</b>\n\n"
                     "👉 Tap the link below to join your private class group:\n"
                     "👉 የግል ትምህርት ቡድንዎን ለመቀላቀል ከታች ያለውን ሊንክ ይጫኑ፦\n"
-                    f"{h(enrollment.invite_link)}\n\n"
+                    f"<pre>{h(enrollment.invite_link)}</pre>\n"
                     "🔒 This link works once — please do not share it.\n"
                     "🔒 ሊንኩ አንድ ጊዜ ብቻ ይሰራል — እባክዎ አያጋሩት።"
                 ),
@@ -549,12 +588,13 @@ def build_app() -> Application:
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, payment_info)],
-            PAYMENT: [MessageHandler(filters.PHOTO, receive_payment)],
+            NAME: [MessageHandler(filters.ALL & ~filters.COMMAND, payment_info)],
+            PAYMENT: [MessageHandler(filters.ALL & ~filters.COMMAND, receive_payment)],
         },
         fallbacks=[
             CommandHandler("cancel", cancel),
             CommandHandler("start", start),
+            CommandHandler("help", help_cmd),
         ],
         allow_reentry=True,
     )
