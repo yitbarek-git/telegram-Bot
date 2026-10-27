@@ -53,9 +53,8 @@ CBE_BANK_NAME = "CBE · ንግድ ባንክ"
 MAX_CAPTION_LEN = 1024
 MIN_NAME_LEN = 3
 MAX_NAME_LEN = 100
-MIN_PHOTO_BYTES = 8 * 1024
-SUBMIT_COOLDOWN_SEC = 15
-START_COOLDOWN_SEC = 3
+SUBMIT_COOLDOWN_SEC = 3
+START_COOLDOWN_SEC = 2
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -161,9 +160,30 @@ def payment_instructions_html() -> str:
         f"• Account Name / የሂሳብ ስም: <code>{h(CBE_ACCOUNT_NAME)}</code>\n"
         f"• Account Number / የሂሳብ ቁጥር: <code>{h(CBE_ACCOUNT_NUMBER)}</code>\n\n"
 
-        f"📸 After paying, take a screenshot of the receipt and send it here.\n"
-        f"📸 ከከፈሉ በኋላ የደረሰኙን ስክሪንሾት አንስተው እዚህ ይላኩ።"
+        f"📸 After paying, send a screenshot of the receipt here.\n"
+        f"📸 ከከፈሉ በኋላ የደረሰኙን ስክሪንሾት እዚህ ይላኩ።\n\n"
+        f"✅ You can send it as a <b>photo</b> or as an <b>image file</b> — both work.\n"
+        f"✅ በ<b>ፎቶ</b> ወይም በ<b>ምስል ፋይል</b> መላክ ይችላሉ — ሁለቱም ይሰራሉ።"
     )
+
+
+def is_image_document(message) -> bool:
+    doc = getattr(message, "document", None)
+    if not doc:
+        return False
+    mime = (doc.mime_type or "").lower()
+    if mime.startswith("image/"):
+        return True
+    fname = (doc.file_name or "").lower()
+    return fname.endswith((".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".gif", ".bmp"))
+
+
+def extract_image_id(message) -> tuple[str | None, str]:
+    if getattr(message, "photo", None):
+        return message.photo[-1].file_id, "photo"
+    if is_image_document(message):
+        return message.document.file_id, "document"
+    return None, "none"
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -197,18 +217,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def payment_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if update.message.photo:
+    file_id, kind = extract_image_id(update.message)
+    if file_id:
         await _reply(
             update,
-            "⚠️ That's an image. First, please <b>type your full name</b> as text.\n"
-            "⚠️ ያ ምስል ነው። በመጀመሪያ <b>ሙሉ ስምዎን</b> በጽሑፍ ይጻፉ።\n\n"
+            "📸 Got the image — but first I need your <b>name</b>.\n"
+            "📸 ምስሉ ደርሷል — ግን መጀመሪያ <b>ስምዎን</b> እፈልጋለሁ።\n\n"
             "✍️ Type your full name:\n"
             "✍️ ሙሉ ስምዎን ይጻፉ፦",
             parse_mode=ParseMode.HTML,
         )
         return NAME
 
-    name = clean_name(update.message.text or "")
+    if not update.message.text:
+        await _reply(
+            update,
+            "✍️ Please type your <b>full name</b> as text:\n"
+            "✍️ እባክዎ <b>ሙሉ ስምዎን</b> በጽሑፍ ይጻፉ፦",
+            parse_mode=ParseMode.HTML,
+        )
+        return NAME
+
+    name = clean_name(update.message.text)
 
     if not name or len(name) < MIN_NAME_LEN:
         await _reply(
@@ -250,17 +280,18 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await _reply(update, "⚠️ Admin cannot enroll. Use /status to review students.")
         return ConversationHandler.END
 
-    if not update.message.photo:
+    file_id, kind = extract_image_id(update.message)
+
+    if not file_id:
         await _reply(
             update,
-            "⚠️ Please send the <b>screenshot as an image</b> — not text, not a document.\n"
-            "⚠️ እባክዎ <b>ስክሪንሾቱን እንደ ምስል</b> ይላኩ — ጽሑፍ ወይም ሰነድ አይደለም።\n\n"
-            "📸 How to send:\n"
-            "1️⃣ Open your payment app → take a screenshot\n"
-            "2️⃣ In this chat, tap 📎 → <b>Gallery</b> → select the screenshot → send\n\n"
-            "📸 እንዴት እንደሚላኩ፦\n"
-            "1️⃣ የክፍያ መተግበሪያውን ከፍተው ስክሪንሾት ያንሱ\n"
-            "2️⃣ በዚህ ውይይት 📎 ን ተጭነው → <b>ጋለሪ</b> → ስክሪንሾቱን ይምረጡ → ይላኩ",
+            "⚠️ Please send the <b>screenshot as an image</b> — photo or image file.\n"
+            "⚠️ እባክዎ <b>ስክሪንሾቱን እንደ ምስል</b> ይላኩ — ፎቶ ወይም ምስል ፋይል።\n\n"
+            "📸 <b>Two easy ways · ሁለት ቀላል መንገዶች:</b>\n"
+            "1️⃣ Open your payment app → take a screenshot → in this chat, tap 📎 → <b>Gallery</b> → send\n"
+            "2️⃣ Or: tap 📎 → <b>File</b> → pick the image file → send\n\n"
+            "1️⃣ የክፍያ መተግበሪያውን ከፍተው ስክሪንሾት ያንሱ → 📎 → <b>ጋለሪ</b> → ይላኩ\n"
+            "2️⃣ ወይም 📎 → <b>ፋይል</b> → ምስሉን ይምረጡ → ይላኩ",
             parse_mode=ParseMode.HTML,
         )
         return PAYMENT
@@ -268,17 +299,8 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not cooldown_ok(user.id, SUBMIT_COOLDOWN_SEC):
         await _reply(
             update,
-            "⏳ Please wait a few seconds before sending again.\n"
-            "⏳ እባክዎ ለጥቂት ሰከንዶች ቆይተው እንደገና ይላኩ።",
-        )
-        return PAYMENT
-
-    best = update.message.photo[-1]
-    if best.file_size and best.file_size < MIN_PHOTO_BYTES:
-        await _reply(
-            update,
-            "⚠️ The image is too small to read — please send a clearer, full screenshot.\n"
-            "⚠️ ምስሉ በጣም ትንሽ ነው — ግልጽ ሙሉ ስክሪንሾት ይላኩ።",
+            "⏳ Please wait a moment before sending again.\n"
+            "⏳ እባክዎ ለአፍታ ቆይተው እንደገና ይላኩ።",
         )
         return PAYMENT
 
@@ -288,7 +310,6 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         previous.invite_link = None
         logger.info("User %s resubmitted; previous pending marked rejected", user.id)
 
-    photo_file = best.file_id
     name = context.user_data.get("name", "Unknown")
     if not name or name == "Unknown":
         name = clean_name(user.full_name or "") or "Unknown"
@@ -307,23 +328,34 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     ]]
 
     username_display = f"@{h(user.username)}" if user.username else "<i>No username</i>"
+    kind_label = "photo" if kind == "photo" else "image file"
     caption_body = (
         f"🚨 <b>New Enrollment Request</b>\n\n"
         f"👤 Name: {h(name)}\n"
         f"📚 Course: {h(COURSE_NAME)}\n"
         f"🔗 Username: {username_display}\n"
+        f"🖼 Receipt: <i>{h(kind_label)}</i>\n"
         f"🆔 ID: <code>{user.id}</code>"
     )
     caption = safe_caption(caption_body, "")
 
     try:
-        sent = await context.bot.send_photo(
-            chat_id=ADMIN_ID,
-            photo=photo_file,
-            caption=caption,
-            parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
+        if kind == "photo":
+            sent = await context.bot.send_photo(
+                chat_id=ADMIN_ID,
+                photo=file_id,
+                caption=caption,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+            )
+        else:
+            sent = await context.bot.send_document(
+                chat_id=ADMIN_ID,
+                document=file_id,
+                caption=caption,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+            )
         enrollment.admin_message_id = sent.message_id
     except Exception:
         logger.exception("Failed to forward payment to admin for user %s", user.id)
@@ -368,8 +400,8 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "2️⃣ <b>ሙሉ ስምዎን</b> በጽሑፍ ይላኩ።\n\n"
         f"3️⃣ Pay {h(COURSE_PRICE)} via Telebirr or CBE.\n"
         f"3️⃣ {h(COURSE_PRICE)} በቴሌብር ወይም በንግድ ባንክ ይክፈሉ።\n\n"
-        "4️⃣ Send the <b>screenshot</b> of your receipt here.\n"
-        "4️⃣ የደረሰኙን <b>ስክሪንሾት</b> እዚህ ይላኩ።\n\n"
+        "4️⃣ Send the <b>screenshot</b> — photo or image file.\n"
+        "4️⃣ <b>ስክሪንሾቱን</b> ይላኩ — ፎቶ ወይም ምስል ፋይል።\n\n"
         "5️⃣ Wait for approval — you'll receive a private group link.\n"
         "5️⃣ ማረጋገጫ ይጠብቁ — የግል ቡድን ሊንክ ይደርስዎታል።\n\n"
         "───────────\n"
@@ -418,7 +450,7 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 async def fallback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    text = (update.message.text or "").strip().lower()
+    text = (update.message.text or "").strip().lower() if update.message.text else ""
 
     greetings = {
         "hi", "hello", "hey", "salam", "selam", "ሰላም", "ሰላምታ",
@@ -432,13 +464,22 @@ async def fallback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             "ለመመዝገብ /start ይጻፉ ወይም <b>ሙሉ ስምዎን</b> ይላኩ።",
             parse_mode=ParseMode.HTML,
         )
+    elif context.user_data.get("name"):
+        await _reply(
+            update,
+            "📸 I'm waiting for your <b>screenshot</b>.\n"
+            "📸 <b>ስክሪንሾትዎን</b> እየጠበቅኩ ነው።\n\n"
+            "Send the receipt as a <b>photo</b> or <b>image file</b>.\n"
+            "ደረሰኙን በ<b>ፎቶ</b> ወይም በ<b>ምስል ፋይል</b> ይላኩ።",
+            parse_mode=ParseMode.HTML,
+        )
     else:
         await _reply(
             update,
             "🤔 I didn't catch that.\n"
             "🤔 ያንን አልገባኝም።\n\n"
-            "Send /start to register, or /help for instructions.\n"
-            "ለመመዝገብ /start ይጻፉ፣ ወይም ለመመሪያ /help ይጻፉ።",
+            "Type your <b>full name</b> to continue, or /start to restart.\n"
+            "<b>ሙሉ ስምዎን</b> ይጻፉ፣ ወይም ለመጀመር /start ይጻፉ።",
             parse_mode=ParseMode.HTML,
         )
 
@@ -447,11 +488,51 @@ async def fallback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return NAME
 
 
+async def fallback_media(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    file_id, _ = extract_image_id(update.message)
+
+    if context.user_data.get("name") and file_id:
+        return await receive_payment(update, context)
+
+    if context.user_data.get("name"):
+        await _reply(
+            update,
+            "📸 Please send the screenshot as a <b>photo</b> or <b>image file</b>.\n"
+            "📸 እባክዎ ስክሪንሾቱን በ<b>ፎቶ</b> ወይም በ<b>ምስል ፋይል</b> ይላኩ።",
+            parse_mode=ParseMode.HTML,
+        )
+        return PAYMENT
+
+    await _reply(
+        update,
+        "📸 Nice image — but I need your <b>name</b> first.\n"
+        "📸 ጥሩ ምስል ነው — ግን መጀመሪያ <b>ስምዎን</b> እፈልጋለሁ።\n\n"
+        "✍️ Type your full name:\n"
+        "✍️ ሙሉ ስምዎን ይጻፉ፦",
+        parse_mode=ParseMode.HTML,
+    )
+    return NAME
+
+
 async def catchall_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
+    chat = update.effective_chat
+
+    if chat and chat.type in ("group", "supergroup"):
+        return
 
     if user and user.id == ADMIN_ID:
         await _reply(update, "ℹ️ Admin — use /status or /help.")
+        return
+
+    file_id, _ = extract_image_id(update.message)
+    if file_id:
+        await _reply(
+            update,
+            "📸 Got your image — to enroll, tap /start.\n"
+            "📸 ምስሉ ደርሷል — ለመመዝገብ /start ን ይጫኑ።",
+            parse_mode=ParseMode.HTML,
+        )
         return
 
     if update.message and update.message.text:
@@ -485,12 +566,27 @@ async def catchall_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 async def catchall_non_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat = update.effective_chat
+    if chat and chat.type in ("group", "supergroup"):
+        return
+
+    msg = update.message
+    file_id, _ = extract_image_id(msg) if msg else (None, "none")
+    if file_id:
+        await _reply(
+            update,
+            "📸 Got your image — to enroll, tap /start.\n"
+            "📸 ምስሉ ደርሷል — ለመመዝገብ /start ን ይጫኑ።",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+
     await _reply(
         update,
-        "🤖 I can only work with text and screenshots.\n"
-        "🤖 በጽሑፍ እና በስክሪንሾት ብቻ ነው የምሰራው።\n\n"
-        "Send /start to enroll.\n"
-        "ለመመዝገብ /start ይላኩ።",
+        "🤖 I can work with <b>text</b> and <b>screenshots</b>.\n"
+        "🤖 በ<b>ጽሑፍ</b> እና በ<b>ስክሪንሾት</b> ነው የምሰራው።\n\n"
+        "Tap /start to enroll.\n"
+        "ለመመዝገብ /start ይጫኑ።",
         parse_mode=ParseMode.HTML,
     )
 
@@ -638,9 +734,10 @@ async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 def build_app() -> Application:
     request = HTTPXRequest(
-        connection_pool_size=8,
+        connection_pool_size=16,
         connect_timeout=10,
         read_timeout=30,
+        write_timeout=30,
     )
     app = (
         ApplicationBuilder()
@@ -656,12 +753,15 @@ def build_app() -> Application:
             NAME: [
                 MessageHandler(filters.COMMAND, fallback_text),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, payment_info),
-                MessageHandler(~filters.TEXT, fallback_text),
+                MessageHandler(~filters.TEXT, fallback_media),
             ],
             PAYMENT: [
                 MessageHandler(filters.COMMAND, fallback_text),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_payment),
-                MessageHandler(~filters.TEXT & ~filters.PHOTO, receive_payment),
+                MessageHandler(filters.PHOTO, receive_payment),
+                MessageHandler(filters.Document.IMAGE, receive_payment),
+                MessageHandler(filters.Document.ALL, receive_payment),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, fallback_text),
+                MessageHandler(~filters.TEXT & ~filters.PHOTO & ~filters.Document.ALL, fallback_media),
             ],
         },
         fallbacks=[
