@@ -55,6 +55,7 @@ MIN_NAME_LEN = 3
 MAX_NAME_LEN = 100
 SUBMIT_COOLDOWN_SEC = 3
 START_COOLDOWN_SEC = 2
+CATCHALL_COOLDOWN_SEC = 2
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -186,7 +187,15 @@ def extract_image_id(message) -> tuple[str | None, str]:
     return None, "none"
 
 
+def is_private_chat(update: Update) -> bool:
+    chat = update.effective_chat
+    return bool(chat and chat.type == "private")
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if not is_private_chat(update):
+        return ConversationHandler.END
+
     user = update.effective_user
 
     if not cooldown_ok(user.id, START_COOLDOWN_SEC):
@@ -243,8 +252,8 @@ async def payment_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     if not name or len(name) < MIN_NAME_LEN:
         await _reply(
             update,
-            "⚠️ Please type your <b>real name using letters</b> (at least 2 characters).\n"
-            "⚠️ እባክዎ <b>በፊደል</b> እውነተኛ ስምዎን ይጻፉ (ቢያንስ 2 ፊደል)።\n\n"
+            f"⚠️ Please type your <b>real name using letters</b> (at least {MIN_NAME_LEN} characters).\n"
+            f"⚠️ እባክዎ <b>በፊደል</b> እውነተኛ ስምዎን ይጻፉ (ቢያንስ {MIN_NAME_LEN} ፊደል)።\n\n"
             "✍️ Type your full name:\n"
             "✍️ ሙሉ ስምዎን ይጻፉ፦",
             parse_mode=ParseMode.HTML,
@@ -253,8 +262,8 @@ async def payment_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     if len(name) > MAX_NAME_LEN:
         await _reply(
             update,
-            "⚠️ Name is too long — please use 100 characters or fewer.\n"
-            "⚠️ ስሙ በጣም ረጅም ነው — ከ100 ፊደል በታች ይጠቀሙ።\n\n"
+            f"⚠️ Name is too long — please use {MAX_NAME_LEN} characters or fewer.\n"
+            f"⚠️ ስሙ በጣም ረጅም ነው — ከ{MAX_NAME_LEN} ፊደል በታች ይጠቀሙ።\n\n"
             "✍️ Type your full name:\n"
             "✍️ ሙሉ ስምዎን ይጻፉ፦",
             parse_mode=ParseMode.HTML,
@@ -382,6 +391,9 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if not is_private_chat(update):
+        return ConversationHandler.END
+
     context.user_data.clear()
     await update.message.reply_text(
         "Enrollment cancelled. Type /start to try again.\n"
@@ -392,6 +404,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_private_chat(update):
+        return
+
     await update.message.reply_text(
         "ℹ️ <b>How to register · እንዴት እንደሚመዘገቡ</b>\n\n"
         "1️⃣ Type /start to begin.\n"
@@ -450,6 +465,13 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 async def fallback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user = update.effective_user
+
+    if user and not cooldown_ok(user.id, CATCHALL_COOLDOWN_SEC):
+        if context.user_data.get("name"):
+            return PAYMENT
+        return NAME
+
     text = (update.message.text or "").strip().lower() if update.message.text else ""
 
     greetings = {
@@ -515,13 +537,18 @@ async def fallback_media(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def catchall_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    chat = update.effective_chat
-
-    if chat and chat.type in ("group", "supergroup"):
+    if not is_private_chat(update):
         return
 
-    if user and user.id == ADMIN_ID:
+    user = update.effective_user
+
+    if not user:
+        return
+
+    if not cooldown_ok(user.id, CATCHALL_COOLDOWN_SEC):
+        return
+
+    if user.id == ADMIN_ID:
         await _reply(update, "ℹ️ Admin — use /status or /help.")
         return
 
@@ -566,8 +593,19 @@ async def catchall_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 async def catchall_non_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat = update.effective_chat
-    if chat and chat.type in ("group", "supergroup"):
+    if not is_private_chat(update):
+        return
+
+    user = update.effective_user
+
+    if not user:
+        return
+
+    if not cooldown_ok(user.id, CATCHALL_COOLDOWN_SEC):
+        return
+
+    if user.id == ADMIN_ID:
+        await _reply(update, "ℹ️ Admin — use /status or /help.")
         return
 
     msg = update.message
@@ -630,6 +668,7 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     if action == "approve":
+        link_created = False
         try:
             if not enrollment.invite_link:
                 link = await context.bot.create_chat_invite_link(
@@ -638,6 +677,7 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     name=f"student_{student_id}",
                 )
                 enrollment.invite_link = link.invite_link
+                link_created = True
 
             invite_keyboard = InlineKeyboardMarkup(
                 [[InlineKeyboardButton(
@@ -649,12 +689,14 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 chat_id=student_id,
                 text=(
                     "🎉 <b>Payment verified — welcome to A+ Academy!</b>\n"
-                    "🎉 <b>ክፍያዎ ተረጋግጧል — ወደ A+ አካዳሚ እንኳን በደህና መጡ!</b>\n\n"
+                    "🎉 <b>ክፍያዎ ተረጋግጧል — ወደ A+ Academy እንኳን በደህና መጡ!</b>\n\n"
                     "👉 Tap the button below to join your private class group:\n"
-                    "👉 የግል ትምህርት ቡድንዎን ለመቀላቀል ከታች ያለውን ቁልፍ ይጫኑ፦\n\n"
+                    "👉 የግል የትምህርት ቡድንዎን ለመቀላቀል ከታች ያለውን ቁልፍ ይጫኑ፦\n\n"
                     f"{enrollment.invite_link}\n\n"
-                    "🔒 This link works once — please do not share it.\n"
-                    "🔒 ሊንኩ አንድ ጊዜ ብቻ ይሰራል — እባክዎ አያጋሩት።"
+                    "🔒 This is a one-time invite link. Do not share it with anyone.\n"
+                    "🔒 ይህ ሊንክ አንድ ጊዜ ብቻ የሚያገለግል የመግቢያ ሊንክ ነው። ለሌላ ሰው አያጋሩት።\n"
+                    "⚠️ Sharing this link may result in removal from the group without a refund.\n"
+                    "⚠️ ሊንኩን ለሌላ ሰው ካጋሩ፣ ከቡድኑ ሊታገዱ ይችላሉ፤ የከፈሉትም ገንዘብ አይመለስም።"
                 ),
                 parse_mode=ParseMode.HTML,
                 reply_markup=invite_keyboard,
@@ -677,6 +719,8 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 )
 
         except Exception as e:
+            if link_created:
+                enrollment.invite_link = None
             logger.exception("Error approving user %s", student_id)
             await context.bot.send_message(
                 chat_id=ADMIN_ID,
