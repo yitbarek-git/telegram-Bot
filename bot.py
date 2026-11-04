@@ -689,9 +689,9 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 chat_id=student_id,
                 text=(
                     "🎉 <b>Payment verified — welcome to A+ Academy!</b>\n"
-                    "🎉 <b>ክፍያዎ ተረጋግጧል — ወደ A+ Academy እንኳን በደህና መጡ!</b>\n\n"
-                    "👉 Tap the button below to join your private class group:\n"
-                    "👉 የግል የትምህርት ቡድንዎን ለመቀላቀል ከታች ያለውን ቁልፍ ይጫኑ፦\n\n"
+                    "🎉 <b>ክፍያዎ ተረጋግጧል — ወደ A+ Academy Private tutorial እንኳን በደህና መጡ!</b>\n\n"
+                    "👉 Tap the link below to join your private class group:\n"
+                    "👉 የግል የትምህርት ቡድንዎን ለመቀላቀል ከታች ያለውን Link ይጫኑ፦\n\n"
                     f"{enrollment.invite_link}\n\n"
                     "🔒 This is a one-time invite link. Do not share it with anyone.\n"
                     "🔒 ይህ ሊንክ አንድ ጊዜ ብቻ የሚያገለግል የመግቢያ ሊንክ ነው። ለሌላ ሰው አያጋሩት።\n"
@@ -738,8 +738,8 @@ async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 text=(
                     "❌ <b>Payment verification failed.</b>\n"
                     "❌ <b>የክፍያ ማረጋገጫው አልተሳካም።</b>\n\n"
-                    "The receipt could not be verified. Please contact support, or type /start to try again with a clearer screenshot.\n"
-                    "ደረሰኙን ማረጋገጥ አልቻልንም። እባክዎ ድጋፍ ያግኙ፣ ወይም በ /start በመጻፍ ግልጽ ስክሪንሾት እንደገና ይላኩ።"
+                    "The receipt could not be verified. Please type /start to try again with a clearer screenshot.\n"
+                    "ደረሰኙን ማረጋገጥ አልቻልንም። እባክዎ /start በማለት ግልጽ(ትክክለኛ) ስክሪንሾት እንደገና ይላኩ።"
                 ),
                 parse_mode=ParseMode.HTML,
             )
