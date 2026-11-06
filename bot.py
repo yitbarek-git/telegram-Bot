@@ -151,18 +151,16 @@ def payment_instructions_html() -> str:
     return (
         f"💵 <b>Price:</b> {h(COURSE_PRICE)} — one payment, all courses.\n"
         f"💵 <b>ዋጋ፦</b> {h(COURSE_PRICE)} — አንድ ክፍያ ለሁሉም ትምህርቶች።\n\n"
-
-        f"💳 <b>Pay via Telebirr</b>\n"
-        f"💳 <b>በቴሌብር ይክፈሉ</b>\n"
-        f"• Number / ቁጥር: <code>{h(TELEBIRR_NUMBER)}</code>\n\n"
-
-        f"🏦 <b>Or via CBE · ንግድ ባንክ</b>\n"
-        f"🏦 <b>ወይም በንግድ ባንክ (CBE)</b>\n"
+        
+        f"🏦 <b>Commercial Bank of Ethiopia (CBE) · ንግድ ባንክ</b>\n"
         f"• Account Name / የሂሳብ ስም: <code>{h(CBE_ACCOUNT_NAME)}</code>\n"
         f"• Account Number / የሂሳብ ቁጥር: <code>{h(CBE_ACCOUNT_NUMBER)}</code>\n\n"
 
+       f"💳 <b>Or Pay via Telebirr · ወይም በቴሌብር ይክፈሉ</b>\n"
+        f"• Number / ቁጥር: <code>{h(TELEBIRR_NUMBER)}</code> = Yitbarek\n\n"
+        
         f"📸 After paying, send a screenshot of the receipt here.\n"
-        f"📸 ከከፈሉ በኋላ የደረሰኙን ስክሪንሾት እዚህ ይላኩ።\n\n"
+        f"📸 ከከፈሉ በኋላ የደረሰኙን ግልጽ ስክሪንሾት እዚህ ይላኩ።\n\n"
         f"✅ You can send it as a <b>photo</b> or as an <b>image file</b> — both work.\n"
         f"✅ በ<b>ፎቶ</b> ወይም በ<b>ምስል ፋይል</b> መላክ ይችላሉ — ሁለቱም ይሰራሉ።"
     )
