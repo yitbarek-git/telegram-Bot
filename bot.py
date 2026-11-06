@@ -42,7 +42,7 @@ if GROUP_ID >= 0:
     )
 
 COURSE_NAME = "All Freshman Courses"
-COURSE_NAME_AM = "የመጀመሪያ ዓመት ትምህርቶች ሁሉም"
+COURSE_NAME_AM = "ሁሉንም የመጀመሪያ ዓመት ትምህርቶች"
 COURSE_PRICE = "300 ETB"
 
 TELEBIRR_NUMBER = "0929781996"
