@@ -141,12 +141,6 @@ async def _reply(update: Update, text: str, **kwargs) -> None:
         logger.exception("Failed to reply to user %s", uid)
 
 
-def _progress_hint(step: int) -> str:
-    if step == 1:
-        return "\n\n<i>Step 1 of 2 · ደረጃ 1 ከ 2</i>"
-    return "\n\n<i>Step 2 of 2 · ደረጃ 2 ከ 2</i>"
-
-
 def payment_instructions_html() -> str:
     return (
         f"💵 <b>Price:</b> {h(COURSE_PRICE)} — one payment, all courses.\n"
@@ -215,8 +209,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         f"📚 Enroll in <b>{h(COURSE_NAME)}</b> with one payment.\n"
         f"📚 በአንድ ክፍያ <b>{h(COURSE_NAME_AM)}</b> ይመዝገቡ።\n\n"
         "✍️ Type your <b>full name</b>:\n"
-        "✍️ <b>ሙሉ ስምዎን</b> ይጻፉ፦"
-        + _progress_hint(1),
+        "✍️ <b>ሙሉ ስምዎን</b> ይጻፉ፦",
         parse_mode=ParseMode.HTML,
         reply_markup=ReplyKeyboardRemove(),
     )
@@ -273,8 +266,7 @@ async def payment_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     await update.message.reply_text(
         payment_instructions_html()
         + "\n\n📸 <b>Send the screenshot now.</b>\n"
-          "📸 <b>አሁን ስክሪንሾቱን ይላኩ።</b>"
-        + _progress_hint(2),
+          "📸 <b>አሁን ስክሪንሾቱን ይላኩ።</b>",
         parse_mode=ParseMode.HTML,
     )
     return PAYMENT
